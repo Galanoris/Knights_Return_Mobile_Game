@@ -57,6 +57,8 @@ export class GameScene extends Phaser.Scene {
     this.relicFound = false;
     this.levelCoinsCollected = 0;
     this.totalCoins = 0;
+    this.spawnX = TILE_SIZE * 2;
+    this.spawnY = TILE_SIZE * 10;
     // Initialize checkpoint with default spawn (overwritten in parseObjectLayers)
     this.checkpoint = new CheckpointManager(TILE_SIZE * 2, TILE_SIZE * 10);
   }
@@ -141,16 +143,19 @@ export class GameScene extends Phaser.Scene {
       new Phaser.Geom.Rectangle(0, 0, mapWidth, mapHeight),
     );
 
-    // HUD as parallel scene
+    // HUD as parallel scene — stop first to ensure create() always runs fresh on restart
+    this.scene.stop('HUDScene');
     this.scene.launch('HUDScene');
     this.events.emit('heartChanged', this.player.hearts, this.player.maxHearts);
     this.events.emit('coinChanged', this.levelCoinsCollected);
     this.events.emit('livesChanged', this.player.lives);
 
-    // Player death handler
+    // Player death handler — off before on so listeners never accumulate across restarts
+    this.events.off('playerDead', this.onPlayerDead, this);
     this.events.on('playerDead', this.onPlayerDead, this);
 
-    // Enemy kill handler — update coin count + HUD
+    // Enemy kill handler
+    this.events.off('enemyKilled');
     this.events.on('enemyKilled', (coinValue: number) => {
       this.levelCoinsCollected += coinValue;
       SaveManager.addCoins(coinValue);
@@ -346,8 +351,14 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const e = enemy as Enemy;
     if (!e.active) return;
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+    const enemyBody  = e.body as Phaser.Physics.Arcade.Body;
     if (this.player.fsm.state === 'pogo') {
-      (this.player.body as Phaser.Physics.Arcade.Body).setVelocityY(-280);
+      playerBody.setVelocityY(-280);
+      this.player.fsm.transition('jump');
+      e.takeDamage(1);
+    } else if (playerBody.velocity.y > 0 && playerBody.bottom <= enemyBody.top + 6) {
+      playerBody.setVelocityY(-180);
       this.player.fsm.transition('jump');
       e.takeDamage(1);
     } else {

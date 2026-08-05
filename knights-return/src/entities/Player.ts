@@ -53,7 +53,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     body.setCollideWorldBounds(false);
 
     // Attack hitbox (disabled by default)
-    this.attackHitbox = scene.add.rectangle(x, y, 32, 16, 0xff0000, 0);
+    this.attackHitbox = scene.add.rectangle(x, y, 16, 16, 0xff0000, 0);
     scene.physics.add.existing(this.attackHitbox, false);
     (this.attackHitbox.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     this.disableAttackHitbox();
@@ -148,6 +148,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (state === 'dead') return;
     if (state === 'hurt') {
       this.applyHorizontalMovement(body, input);
+      if (input.jumpJustPressed) {
+        if (this.coyoteTimer > 0) {
+          this.doJump();
+        } else if (this.hasDoubleJump) {
+          this.hasDoubleJump = false;
+          body.setVelocityY(JUMP_VELOCITY);
+          this.fsm.transition('jump');
+        }
+      }
+      // Allow attacking while flickering — read live state in case jump just fired
+      if (input.attackJustPressed && this.fsm.state === 'hurt') {
+        this.fsm.transition('attack');
+      }
       this.fsm.update(delta);
       this.updateHitboxPosition();
       return;
@@ -185,15 +198,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // Transition ground states
-    if (state !== 'attack' && state !== 'pogo' && state !== 'hurt') {
-      if (!onGround && body.velocity.y > 0 && state !== 'fall') {
-        this.fsm.transition('fall');
-      } else if (onGround) {
-        if (Math.abs(body.velocity.x) > 5 && (state === 'idle' || state === 'fall' || state === 'jump')) {
-          this.fsm.transition('run');
-        } else if (Math.abs(body.velocity.x) <= 5 && (state === 'run' || state === 'fall' || state === 'jump')) {
-          this.fsm.transition('idle');
+    // Transition ground states — re-read live FSM state so an attack/pogo that just fired
+    // this frame is not overwritten by a stale local `state` variable.
+    {
+      const s = this.fsm.state as PlayerStateName;
+      if (s !== 'attack' && s !== 'pogo' && s !== 'hurt') {
+        if (!onGround && body.velocity.y > 0 && s !== 'fall') {
+          this.fsm.transition('fall');
+        } else if (onGround) {
+          if (Math.abs(body.velocity.x) > 5 && (s === 'idle' || s === 'fall' || s === 'jump')) {
+            this.fsm.transition('run');
+          } else if (Math.abs(body.velocity.x) <= 5 && (s === 'run' || s === 'fall' || s === 'jump')) {
+            this.fsm.transition('idle');
+          }
         }
       }
     }
@@ -231,7 +248,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateHitboxPosition(): void {
-    const offsetX = this.facingRight ? 18 : -18;
+    const offsetX = this.facingRight ? 12 : -12;
     this.attackHitbox.setPosition(this.x + offsetX, this.y);
   }
 

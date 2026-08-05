@@ -27,7 +27,7 @@ export class PreloadScene extends Phaser.Scene {
 
   create(): void {
     this.generateTextures();
-    this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
+    this.scene.start('MainMenuScene');
   }
 
   private makeTexture(key: string, w: number, h: number, draw: (g: Phaser.GameObjects.Graphics) => void): void {

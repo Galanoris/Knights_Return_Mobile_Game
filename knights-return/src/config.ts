@@ -4,8 +4,8 @@ export const TILE_SIZE = 16;
 
 // Physics
 export const GRAVITY = 900;           // px/s²
-export const PLAYER_SPEED = 180;      // max horizontal px/s
-export const PLAYER_ACCEL = 1200;     // px/s² acceleration on ground
+export const PLAYER_SPEED = 140;      // max horizontal px/s
+export const PLAYER_ACCEL = 900;      // px/s² acceleration on ground
 export const PLAYER_DECEL = 1800;     // px/s² deceleration (no input)
 export const JUMP_VELOCITY = -300;    // initial jump Y velocity (negative = up)
 export const JUMP_CUT_MULTIPLIER = 0.4; // velocity kept when jump released early
