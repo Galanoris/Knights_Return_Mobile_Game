@@ -9,11 +9,17 @@ export interface ResultsData {
 }
 
 export class ResultsScene extends Phaser.Scene {
+  private continueCalled = false;
+  private frameCount = 0;
+
   constructor() {
     super({ key: 'ResultsScene' });
   }
 
   create(data: ResultsData): void {
+    this.continueCalled = false;
+    this.frameCount = 0;
+
     const cx = this.scale.width / 2;
     let y = 20;
 
@@ -22,7 +28,6 @@ export class ResultsScene extends Phaser.Scene {
     }).setOrigin(0.5);
     y += 24;
 
-    // Crowns — animate in one by one
     const crowns = data.crowns;
     const crownStr = '★'.repeat(crowns) + '☆'.repeat(3 - crowns);
     const crownText = this.add.text(cx, y, '☆☆☆', {
@@ -37,7 +42,6 @@ export class ResultsScene extends Phaser.Scene {
       onComplete: () => crownText.setText(crownStr),
     });
 
-    // Stats
     const secs = (data.timeMs / 1000).toFixed(1);
     this.add.text(cx, y, `Time: ${secs}s`, {
       fontSize: '8px', color: '#ffffff', fontFamily: 'monospace',
@@ -58,23 +62,27 @@ export class ResultsScene extends Phaser.Scene {
 
     y += 10;
 
-    // Continue button
-    const cont = this.add.text(cx, y, '[ CONTINUE ]', {
-      fontSize: '10px', color: '#aaffaa', fontFamily: 'monospace',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    cont.setAlpha(0);
+    this.add.text(cx, y, 'click or press any key to continue', {
+      fontSize: '8px', color: '#aaffaa', fontFamily: 'monospace',
+    }).setOrigin(0.5);
 
-    // Show continue after a moment
-    this.time.delayedCall(1000, () => {
-      this.tweens.add({ targets: cont, alpha: 1, duration: 300 });
-    });
-
-    cont.on('pointerup', () => {
-      // For now, replay the same level. LevelSelect added in M4.
+    const doContinue = () => {
+      // ~1s grace period (60 frames) so the level-end fanfare plays first
+      if (this.continueCalled || this.frameCount < 60) return;
+      this.continueCalled = true;
       this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
-    });
+    };
 
-    cont.on('pointerover', () => cont.setColor('#ffffff'));
-    cont.on('pointerout',  () => cont.setColor('#aaffaa'));
+    window.addEventListener('click', doContinue);
+    window.addEventListener('keydown', doContinue);
+
+    this.events.once('shutdown', () => {
+      window.removeEventListener('click', doContinue);
+      window.removeEventListener('keydown', doContinue);
+    });
+  }
+
+  update(): void {
+    this.frameCount++;
   }
 }
