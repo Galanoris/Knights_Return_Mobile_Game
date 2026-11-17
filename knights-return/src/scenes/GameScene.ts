@@ -64,6 +64,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(_data: GameSceneData): void {
+    // Sky background — fixed in camera space, rendered behind everything
+    this.add.image(0, 0, 'sky').setOrigin(0, 0).setScrollFactor(0).setDepth(-10);
+
     this.physics.world.gravity.y = GRAVITY;
 
     const config = getLevelConfig(this.levelId);

@@ -17,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#1a1a2e',
   pixelArt: true,           // disables anti-aliasing for crisp pixel rendering
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.INTEGER_SCALE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   physics: {
