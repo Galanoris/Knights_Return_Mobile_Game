@@ -262,9 +262,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private playAnim(key: string): void {
-    // Animations defined in PreloadScene. Gracefully skip if missing (prototype).
-    if (this.anims.exists(key)) {
+    // Animations live in the global manager (PreloadScene); states without one show the standing pose.
+    if (this.scene.anims.exists(key)) {
       this.play(key, true);
+    } else {
+      this.anims.stop();
+      this.setTexture('player');
     }
   }
 

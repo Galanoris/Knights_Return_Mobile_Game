@@ -239,8 +239,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private checkpointVisual!: Phaser.GameObjects.Image;
-
   private createPhysicsZone(x: number, y: number, w: number, h: number): Phaser.GameObjects.Zone {
     const zone = this.add.zone(x, y, w, h);
     this.physics.world.enable(zone);
@@ -255,12 +253,12 @@ export class GameScene extends Phaser.Scene {
       if (def.type === 'checkpoint') {
         const cx = x + w / 2;
         const cy = y + h - TILE_SIZE * 4; // 4 tiles above zone bottom = player standing level
-        this.checkpointVisual = this.add.image(cx, cy, 'checkpoint').setDepth(2);
+        const visual = this.add.image(cx, cy, 'checkpoint').setDepth(2);
         const zone = this.createPhysicsZone(x + w / 2, y + h / 2, w, h);
         this.physics.add.overlap(this.player, zone, () => {
           if (this.checkpoint.x !== cx) {
             this.checkpoint.activate(cx, cy);
-            this.checkpointVisual?.setTexture('checkpoint_active');
+            visual.setTexture('checkpoint_active');
           }
         }, undefined, this);
       } else if (def.type === 'end_trigger') {

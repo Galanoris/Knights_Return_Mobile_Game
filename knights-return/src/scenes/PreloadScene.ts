@@ -25,6 +25,12 @@ export class PreloadScene extends Phaser.Scene {
 
   create(): void {
     this.generateTextures();
+    this.anims.create({
+      key: 'run',
+      frames: [{ key: 'player_run1' }, { key: 'player_run2' }],
+      frameRate: 10,
+      repeat: -1,
+    });
     this.scene.start('MainMenuScene');
   }
 
@@ -67,52 +73,58 @@ export class PreloadScene extends Phaser.Scene {
       g.fillRect(13, 15, 3, 1); g.fillRect(15, 9, 1, 7);
     });
 
-    // ── Player (12×16) — armored knight ─────────────────────────────────────
-    this.makeTexture('player', 12, 16, g => {
-      const dark   = 0x3a4a5a;
-      const mid    = 0x5a7090;
-      const hiArmor = 0x8ab0c0;
-      const visor  = 0x0a0a14;
-      const belt   = 0x7a4a28;
-      const buckle = 0xccaa44;
+    // ── Player (12×16) — armored knight: standing + two walk frames ─────────
+    this.makeTexture('player',      12, 16, g => this.drawKnight(g, 0, 0));
+    this.makeTexture('player_run1', 12, 16, g => this.drawKnight(g, 0, 2));
+    this.makeTexture('player_run2', 12, 16, g => this.drawKnight(g, 2, 0));
 
-      // Helmet dome (rows 0–3)
-      g.fillStyle(mid);   g.fillRect(2, 0, 8, 4);
-      g.fillStyle(dark);  g.fillRect(2, 0, 1, 4); g.fillRect(9, 0, 1, 4); // sides
-      g.fillStyle(hiArmor); g.fillRect(3, 0, 6, 1); g.fillRect(3, 0, 1, 3); // top + left
-      // Visor slit (rows 2–3, inner 6px)
-      g.fillStyle(visor); g.fillRect(3, 2, 6, 2);
-      g.fillStyle(hiArmor); g.fillRect(3, 2, 1, 1); // glint in visor
+    this.generateWorldTextures();
+  }
 
-      // Collar (row 4)
-      g.fillStyle(dark); g.fillRect(3, 4, 6, 1);
+  /** leftLift / rightLift raise that leg by N pixels — alternating them makes the walk cycle. */
+  private drawKnight(g: Phaser.GameObjects.Graphics, leftLift: number, rightLift: number): void {
+    const dark   = 0x3a4a5a;
+    const mid    = 0x5a7090;
+    const hiArmor = 0x8ab0c0;
+    const visor  = 0x0a0a14;
+    const belt   = 0x7a4a28;
+    const buckle = 0xccaa44;
 
-      // Chest plate (rows 5–9)
-      g.fillStyle(mid);     g.fillRect(1, 5, 10, 5);
-      g.fillStyle(dark);    g.fillRect(1, 5, 1, 5); g.fillRect(10, 5, 1, 5);  // sides
-      g.fillStyle(hiArmor); g.fillRect(2, 5, 8, 1); g.fillRect(2, 5, 1, 4);   // top + left hi
-      g.fillStyle(dark);    g.fillRect(1, 9, 10, 1);                           // bottom shadow
-      // Centre crease
-      g.fillStyle(dark); g.fillRect(5, 6, 2, 3);
+    // Helmet dome (rows 0–3)
+    g.fillStyle(mid);   g.fillRect(2, 0, 8, 4);
+    g.fillStyle(dark);  g.fillRect(2, 0, 1, 4); g.fillRect(9, 0, 1, 4); // sides
+    g.fillStyle(hiArmor); g.fillRect(3, 0, 6, 1); g.fillRect(3, 0, 1, 3); // top + left
+    // Visor slit (rows 2–3, inner 6px)
+    g.fillStyle(visor); g.fillRect(3, 2, 6, 2);
+    g.fillStyle(hiArmor); g.fillRect(3, 2, 1, 1); // glint in visor
 
-      // Belt (rows 10–11)
-      g.fillStyle(belt);   g.fillRect(2, 10, 8, 2);
-      g.fillStyle(buckle); g.fillRect(4, 10, 4, 2);
-      g.fillStyle(dark);   g.fillRect(2, 10, 1, 2); g.fillRect(9, 10, 1, 2);
+    // Collar (row 4)
+    g.fillStyle(dark); g.fillRect(3, 4, 6, 1);
 
-      // Legs — left
-      g.fillStyle(mid);  g.fillRect(1, 12, 4, 2);
-      g.fillStyle(dark); g.fillRect(1, 14, 4, 1);
-      g.fillStyle(mid);  g.fillRect(0, 14, 5, 1);  // boot wider
-      g.fillStyle(dark); g.fillRect(0, 15, 5, 1);  // boot sole
+    // Chest plate (rows 5–9)
+    g.fillStyle(mid);     g.fillRect(1, 5, 10, 5);
+    g.fillStyle(dark);    g.fillRect(1, 5, 1, 5); g.fillRect(10, 5, 1, 5);  // sides
+    g.fillStyle(hiArmor); g.fillRect(2, 5, 8, 1); g.fillRect(2, 5, 1, 4);   // top + left hi
+    g.fillStyle(dark);    g.fillRect(1, 9, 10, 1);                           // bottom shadow
+    // Centre crease
+    g.fillStyle(dark); g.fillRect(5, 6, 2, 3);
 
-      // Legs — right
-      g.fillStyle(mid);  g.fillRect(7, 12, 4, 2);
-      g.fillStyle(dark); g.fillRect(7, 14, 4, 1);
-      g.fillStyle(mid);  g.fillRect(7, 14, 5, 1);
-      g.fillStyle(dark); g.fillRect(7, 15, 5, 1);
-    });
+    // Belt (rows 10–11)
+    g.fillStyle(belt);   g.fillRect(2, 10, 8, 2);
+    g.fillStyle(buckle); g.fillRect(4, 10, 4, 2);
+    g.fillStyle(dark);   g.fillRect(2, 10, 1, 2); g.fillRect(9, 10, 1, 2);
 
+    // Legs: thigh (rows 12–13), wider boot, dark sole — shifted up by `lift`
+    const leg = (x: number, bootX: number, lift: number) => {
+      if (lift < 2) { g.fillStyle(mid); g.fillRect(x, 12, 4, 2 - lift); }
+      g.fillStyle(mid);  g.fillRect(bootX, 14 - lift, 5, 1);
+      g.fillStyle(dark); g.fillRect(bootX, 15 - lift, 5, 1);
+    };
+    leg(1, 0, leftLift);
+    leg(7, 7, rightLift);
+  }
+
+  private generateWorldTextures(): void {
     // ── Rat (12×10) — brown rodent ──────────────────────────────────────────
     this.makeTexture('rat', 12, 10, g => {
       const outline = 0x2a1a0a, dark = 0x5a3a1e, mid = 0x7a5032;
