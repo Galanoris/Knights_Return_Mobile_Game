@@ -29,7 +29,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private makeTexture(key: string, w: number, h: number, draw: (g: Phaser.GameObjects.Graphics) => void): void {
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
     draw(g);
     g.generateTexture(key, w, h);
     g.destroy();

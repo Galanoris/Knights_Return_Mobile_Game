@@ -349,8 +349,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onPlayerEnemyContact(
-    _player: Phaser.GameObjects.GameObject,
-    enemy: Phaser.GameObjects.GameObject,
+    _player: unknown,
+    enemy: unknown,
   ): void {
     const e = enemy as Enemy;
     if (!e.active) return;

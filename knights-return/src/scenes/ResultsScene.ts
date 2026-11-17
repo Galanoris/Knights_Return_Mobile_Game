@@ -10,7 +10,6 @@ export interface ResultsData {
 
 export class ResultsScene extends Phaser.Scene {
   private continueCalled = false;
-  private frameCount = 0;
 
   constructor() {
     super({ key: 'ResultsScene' });
@@ -18,7 +17,6 @@ export class ResultsScene extends Phaser.Scene {
 
   create(data: ResultsData): void {
     this.continueCalled = false;
-    this.frameCount = 0;
 
     const cx = this.scale.width / 2;
     let y = 20;
@@ -62,27 +60,28 @@ export class ResultsScene extends Phaser.Scene {
 
     y += 10;
 
-    this.add.text(cx, y, 'click or press any key to continue', {
+    // Starts dim, brightens after grace period
+    const prompt = this.add.text(cx, y, 'click or press any key to continue', {
       fontSize: '8px', color: '#aaffaa', fontFamily: 'monospace',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setAlpha(0.3);
 
     const doContinue = () => {
-      // ~1s grace period (60 frames) so the level-end fanfare plays first
-      if (this.continueCalled || this.frameCount < 60) return;
+      if (this.continueCalled) return;
       this.continueCalled = true;
       this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
     };
 
-    window.addEventListener('click', doContinue);
-    window.addEventListener('keydown', doContinue);
+    // 1s grace period — lets crown animation play before accepting input
+    const timer = setTimeout(() => {
+      prompt.setAlpha(1);
+      window.addEventListener('click', doContinue);
+      window.addEventListener('keydown', doContinue);
+    }, 1000);
 
     this.events.once('shutdown', () => {
+      clearTimeout(timer);
       window.removeEventListener('click', doContinue);
       window.removeEventListener('keydown', doContinue);
     });
-  }
-
-  update(): void {
-    this.frameCount++;
   }
 }

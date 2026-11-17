@@ -39,6 +39,15 @@ export class HUDScene extends Phaser.Scene {
     game.events.on('livesChanged',    this.onLivesChanged,  this);
     game.events.on('coinChanged',     this.onCoinChanged,   this);
     game.events.on('relicFound',      this.onRelicFound,    this);
+
+    // These listeners live on GameScene's emitter, which Phaser does not clear when HUD stops.
+    // Left in place, they'd update destroyed text on the next GameScene start and crash the loop.
+    this.events.once('shutdown', () => {
+      game.events.off('heartChanged', this.onHeartChanged, this);
+      game.events.off('livesChanged', this.onLivesChanged, this);
+      game.events.off('coinChanged',  this.onCoinChanged,  this);
+      game.events.off('relicFound',   this.onRelicFound,   this);
+    });
   }
 
   private onHeartChanged(current: number, max: number): void {
