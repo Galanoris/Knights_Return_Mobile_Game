@@ -18,7 +18,7 @@ export class GameOverScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Starts dim, brightens when ready to accept input
-    const prompt = this.add.text(cx, cy + 10, 'click or press any key to retry', {
+    const prompt = this.add.text(cx, cy + 10, 'tap or press any key to retry', {
       fontSize: '8px', color: '#aaaaaa', fontFamily: 'monospace',
     }).setOrigin(0.5).setAlpha(0.3);
 
@@ -31,13 +31,13 @@ export class GameOverScene extends Phaser.Scene {
     // Grace period via native setTimeout — no dependency on Phaser update loop
     const timer = setTimeout(() => {
       prompt.setAlpha(1);
-      window.addEventListener('click', doRestart);
+      window.addEventListener('pointerup', doRestart);
       window.addEventListener('keydown', doRestart);
     }, 600);
 
     this.events.once('shutdown', () => {
       clearTimeout(timer);
-      window.removeEventListener('click', doRestart);
+      window.removeEventListener('pointerup', doRestart);
       window.removeEventListener('keydown', doRestart);
     });
   }

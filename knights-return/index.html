@@ -2,15 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Knight's Return" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
     <title>Knight's Return</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-      canvas { display: block; image-rendering: pixelated; }
+      html, body {
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        /* Stop Safari from scrolling, rubber-banding, zooming or selecting while thumbs are on the screen */
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* No flex centering here: Phaser's autoCenter already offsets the canvas, and doing both shifts it off-centre */
+      body { height: 100dvh; }
+      canvas { display: block; image-rendering: pixelated; touch-action: none; }
+      #rotate {
+        display: none; position: fixed; inset: 0; z-index: 10;
+        background: #000; color: #ffdd00; font: 16px monospace;
+        align-items: center; justify-content: center; text-align: center;
+      }
+      @media (orientation: portrait) and (pointer: coarse) {
+        #rotate { display: flex; }
+      }
     </style>
   </head>
   <body>
+    <div id="rotate">Rotate your phone<br />to play ↻</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

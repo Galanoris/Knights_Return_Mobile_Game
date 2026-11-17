@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { JUMP_BUFFER_MS } from '../config';
+import { touchInput } from '../ui/TouchControls';
 
 export class InputManager {
   private keys: {
@@ -20,6 +21,8 @@ export class InputManager {
   private jumpWasDown = false;
   private _jumpJustPressed = false;
   private _jumpJustReleased = false;
+  private _attackJustPressed = false;
+  private touchAttackWasDown = false;
 
   constructor(scene: Phaser.Scene) {
     const kb = scene.input.keyboard!;
@@ -46,22 +49,24 @@ export class InputManager {
     if (this._jumpJustPressed) this.jumpBufferTimer = JUMP_BUFFER_MS;
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= delta;
     this.jumpWasDown = jumpDown;
+
+    // JustDown consumes the key's pressed flag, so evaluate it exactly once per frame
+    const keyAttack = Phaser.Input.Keyboard.JustDown(this.keys.attack) || Phaser.Input.Keyboard.JustDown(this.keys.attackAlt);
+    this._attackJustPressed = keyAttack || (touchInput.attack && !this.touchAttackWasDown);
+    this.touchAttackWasDown = touchInput.attack;
   }
 
-  get left(): boolean  { return this.keys.left.isDown || this.keys.leftAlt.isDown; }
-  get right(): boolean { return this.keys.right.isDown || this.keys.rightAlt.isDown; }
-  get down(): boolean  { return this.keys.down.isDown; }
+  get left(): boolean  { return this.keys.left.isDown || this.keys.leftAlt.isDown || touchInput.left; }
+  get right(): boolean { return this.keys.right.isDown || this.keys.rightAlt.isDown || touchInput.right; }
+  get down(): boolean  { return this.keys.down.isDown || touchInput.down; }
 
   private get isJumpDown(): boolean {
-    return this.keys.jump.isDown || this.keys.jumpAlt.isDown || this.keys.jumpAlt2.isDown;
+    return this.keys.jump.isDown || this.keys.jumpAlt.isDown || this.keys.jumpAlt2.isDown || touchInput.jump;
   }
 
   get jumpJustPressed():  boolean { return this._jumpJustPressed; }
   get jumpJustReleased(): boolean { return this._jumpJustReleased; }
-
-  get attackJustPressed(): boolean {
-    return Phaser.Input.Keyboard.JustDown(this.keys.attack) || Phaser.Input.Keyboard.JustDown(this.keys.attackAlt);
-  }
+  get attackJustPressed(): boolean { return this._attackJustPressed; }
 
   get bowJustPressed(): boolean {
     return Phaser.Input.Keyboard.JustDown(this.keys.bow);

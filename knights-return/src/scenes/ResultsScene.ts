@@ -61,7 +61,7 @@ export class ResultsScene extends Phaser.Scene {
     y += 10;
 
     // Starts dim, brightens after grace period
-    const prompt = this.add.text(cx, y, 'click or press any key to continue', {
+    const prompt = this.add.text(cx, y, 'tap or press any key to continue', {
       fontSize: '8px', color: '#aaffaa', fontFamily: 'monospace',
     }).setOrigin(0.5).setAlpha(0.3);
 
@@ -74,13 +74,13 @@ export class ResultsScene extends Phaser.Scene {
     // 1s grace period — lets crown animation play before accepting input
     const timer = setTimeout(() => {
       prompt.setAlpha(1);
-      window.addEventListener('click', doContinue);
+      window.addEventListener('pointerup', doContinue);
       window.addEventListener('keydown', doContinue);
     }, 1000);
 
     this.events.once('shutdown', () => {
       clearTimeout(timer);
-      window.removeEventListener('click', doContinue);
+      window.removeEventListener('pointerup', doContinue);
       window.removeEventListener('keydown', doContinue);
     });
   }

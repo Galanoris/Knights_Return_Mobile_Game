@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TouchControls, resetTouchInput } from '../ui/TouchControls';
 
 export class HUDScene extends Phaser.Scene {
   private heartsText!: Phaser.GameObjects.Text;
@@ -21,10 +22,13 @@ export class HUDScene extends Phaser.Scene {
       fontSize: '8px', color: '#ffdd00', fontFamily: 'monospace',
     });
 
-    // Controls hint
-    this.add.text(this.scale.width - 4, this.scale.height - 4, '[J/Z] punch  [↓+J] pogo', {
-      fontSize: '6px', color: '#888888', fontFamily: 'monospace',
-    }).setOrigin(1, 1);
+    if (this.sys.game.device.input.touch) {
+      new TouchControls(this);
+    } else {
+      this.add.text(this.scale.width - 4, this.scale.height - 4, '[J/Z] punch  [↓+J] pogo', {
+        fontSize: '6px', color: '#888888', fontFamily: 'monospace',
+      }).setOrigin(1, 1);
+    }
 
     // Relic notice (hidden by default)
     this.relicNotice = this.add.text(
@@ -47,6 +51,7 @@ export class HUDScene extends Phaser.Scene {
       game.events.off('livesChanged', this.onLivesChanged, this);
       game.events.off('coinChanged',  this.onCoinChanged,  this);
       game.events.off('relicFound',   this.onRelicFound,   this);
+      resetTouchInput(); // a finger held through death must not keep the knight running after Retry
     });
   }
 
