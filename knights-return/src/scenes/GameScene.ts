@@ -14,6 +14,8 @@ import { getLevelConfig } from '../data/levels';
 import { GRAVITY, TILE_SIZE, HIT_INVINCIBILITY_MS } from '../config';
 import { LevelConfig } from '../types/LevelConfig';
 
+const HIT_CONTACT_GRACE_MS = 150;
+
 interface GameSceneData {
   levelKey: string;
   levelId: string;
@@ -45,6 +47,8 @@ export class GameScene extends Phaser.Scene {
 
   // Level end flag (prevent multiple triggers)
   private levelEnded = false;
+  /** When each enemy was last hit by the player's attack — contact damage is ignored briefly after. */
+  private lastHitAt = new WeakMap<Enemy, number>();
   private relicFound = false;
   private mapBottom = 0;
 
@@ -115,14 +119,16 @@ export class GameScene extends Phaser.Scene {
       (_p, spike) => { this.player.takeDamage((spike as Spike).x); },
       undefined, this,
     );
+    // Attack overlap is registered BEFORE contact damage: Arcade resolves overlaps in
+    // creation order, so a punch that lands in the same step as a touch wins the trade.
+    this.physics.add.overlap(
+      this.player.attackHitbox, this.enemies,
+      (_hb, enemy) => { this.onAttackHit(enemy as Enemy); },
+      undefined, this,
+    );
     this.physics.add.overlap(
       this.player, this.enemies,
       this.onPlayerEnemyContact, undefined, this,
-    );
-    this.physics.add.overlap(
-      this.player.attackHitbox, this.enemies,
-      (_hb, enemy) => { (enemy as Enemy).takeDamage(1); },
-      undefined, this,
     );
     this.physics.add.overlap(
       this.player, this.coins,
@@ -361,21 +367,47 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: title, alpha: 0, delay: 1200, duration: 500, onComplete: () => title.destroy() });
   }
 
+  private onAttackHit(e: Enemy): void {
+    if (!e.active || !this.player.registerHit(e)) return; // one hit per enemy per swing
+    if (this.player.fsm.state === 'pogo') {
+      // Pogo bounce — same as the body-contact path, in case the hitbox lands first
+      (this.player.body as Phaser.Physics.Arcade.Body).setVelocityY(-280);
+      this.player.fsm.transition('jump');
+    }
+    const { x, y } = e;
+    this.lastHitAt.set(e, this.time.now);
+    e.takeDamage(1);
+    this.spawnHitSpark(x, y);
+    this.cameras.main.shake(50, 0.003);
+  }
+
+  private spawnHitSpark(x: number, y: number): void {
+    const spark = this.add.image(x, y, 'hit_spark').setDepth(10);
+    this.tweens.add({
+      targets: spark, scale: 1.6, alpha: 0, duration: 160,
+      onComplete: () => spark.destroy(),
+    });
+  }
+
   private onPlayerEnemyContact(
     _player: unknown,
     enemy: unknown,
   ): void {
     const e = enemy as Enemy;
     if (!e.active) return;
+    // An enemy the player just hit can't hurt them in the same moment (matters for multi-HP enemies)
+    if (this.time.now - (this.lastHitAt.get(e) ?? -Infinity) < HIT_CONTACT_GRACE_MS) return;
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     const enemyBody  = e.body as Phaser.Physics.Arcade.Body;
     if (this.player.fsm.state === 'pogo') {
       playerBody.setVelocityY(-280);
       this.player.fsm.transition('jump');
-      e.takeDamage(1);
+      this.lastHitAt.set(e, this.time.now);
+      if (this.player.registerHit(e)) e.takeDamage(1);
     } else if (playerBody.velocity.y > 0 && playerBody.bottom <= enemyBody.top + 6) {
       playerBody.setVelocityY(-180);
       this.player.fsm.transition('jump');
+      this.lastHitAt.set(e, this.time.now);
       e.takeDamage(1);
     } else {
       this.player.takeDamage(e.x);

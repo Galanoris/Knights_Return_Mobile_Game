@@ -34,6 +34,14 @@ export class PreloadScene extends Phaser.Scene {
       frameRate: 10,
       repeat: -1,
     });
+    // Wind-up → strike (up-forward) → follow-through (overhead): ~250 ms
+    this.anims.create({
+      key: 'attack',
+      frames: [{ key: 'player_attack1' }, { key: 'player_attack2' }, { key: 'player_attack3' }],
+      frameRate: 12,
+      repeat: 0,
+    });
+    this.anims.create({ key: 'pogo', frames: [{ key: 'player_pogo' }], frameRate: 1 });
     this.scene.start('MainMenuScene');
   }
 
@@ -76,10 +84,39 @@ export class PreloadScene extends Phaser.Scene {
       g.fillRect(13, 15, 3, 1); g.fillRect(15, 9, 1, 7);
     });
 
-    // ── Player (12×16) — armored knight: standing + two walk frames ─────────
-    this.makeTexture('player',      12, 16, g => this.drawKnight(g, 0, 0));
-    this.makeTexture('player_run1', 12, 16, g => this.drawKnight(g, 0, 2));
-    this.makeTexture('player_run2', 12, 16, g => this.drawKnight(g, 2, 0));
+    // ── Player — 12×16 knight centred in a 24×20 frame (room for the swinging fist).
+    // Knight-local coords: body x 0–11, y 0–15; the frame adds 6px each side + 4px on top.
+    // Faces right; Player flips it for left. Player.ts sets origin/body to match PLAYER_FRAME.
+    const knight = (key: string, draw: (g: Phaser.GameObjects.Graphics) => void) =>
+      this.makeTexture(key, 24, 20, g => { g.translateCanvas(6, 4); draw(g); });
+    knight('player',      g => this.drawKnight(g, 0, 0));
+    knight('player_run1', g => this.drawKnight(g, 0, 2));
+    knight('player_run2', g => this.drawKnight(g, 2, 0));
+    // Attack 1 — wind-up: fist pulled back behind the hip
+    knight('player_attack1', g => {
+      this.drawFist(g, -3, 7);
+      this.drawKnight(g, 1, 0);
+    });
+    // Attack 2 — strike: arm thrust up and forward, smear trailing below the fist
+    knight('player_attack2', g => {
+      this.drawKnight(g, 0, 1);
+      this.drawArm(g, [[10, 5], [12, 3], [13, 1]]);
+      this.drawFist(g, 14, -2);
+      this.drawSmear(g, [[13, 10], [14, 9], [15, 7], [16, 5], [16, 3]]);
+    });
+    // Attack 3 — follow-through: fist high above the helmet's front edge
+    knight('player_attack3', g => {
+      this.drawSmear(g, [[17, 4], [17, 2], [16, 0], [15, -2]]);
+      this.drawKnight(g, 0, 0);
+      this.drawArm(g, [[11, 3], [11, 1], [11, -1]]);
+      this.drawFist(g, 11, -4);
+    });
+    // Pogo — legs tucked, fist driving down under the body
+    knight('player_pogo', g => {
+      this.drawKnight(g, 2, 2);
+      this.drawArm(g, [[5, 11]]);
+      this.drawFist(g, 4, 13);
+    });
 
     this.generateWorldTextures();
   }
@@ -127,7 +164,46 @@ export class PreloadScene extends Phaser.Scene {
     leg(7, 7, rightLift);
   }
 
+  /** 3×3 steel gauntlet with its top-left corner at (x, y). */
+  private drawFist(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
+    g.fillStyle(0x5a7090); g.fillRect(x, y, 3, 3);
+    g.fillStyle(0x3a4a5a); g.fillRect(x, y + 2, 3, 1); g.fillRect(x + 2, y, 1, 3);
+    g.fillStyle(0x8ab0c0); g.fillRect(x, y, 2, 1);
+  }
+
+  /** 2×2 forearm segments (mid armour with a dark underside). */
+  private drawArm(g: Phaser.GameObjects.Graphics, segments: [number, number][]): void {
+    for (const [x, y] of segments) {
+      g.fillStyle(0x5a7090); g.fillRect(x, y, 2, 2);
+      g.fillStyle(0x3a4a5a); g.fillRect(x, y + 1, 2, 1);
+    }
+  }
+
+  /** Motion smear: soft white pixels tracing the fist's path. */
+  private drawSmear(g: Phaser.GameObjects.Graphics, points: [number, number][]): void {
+    points.forEach(([x, y], i) => {
+      g.fillStyle(0xffffff, 0.35 + 0.5 * (i / Math.max(1, points.length - 1)));
+      g.fillRect(x, y, 1, 2);
+    });
+  }
+
   private generateWorldTextures(): void {
+    // ── Swing arc (24×31) — crescent showing the punch's reach (front + overhead).
+    // Pivot (player body centre) is at (4, 22); Player.ts uses SWING_ARC_PIVOT to place it.
+    this.makeTexture('swing_arc', 24, 31, g => {
+      const cx = 4, cy = 22;
+      const a0 = Phaser.Math.DegToRad(-95), a1 = Phaser.Math.DegToRad(25);
+      g.lineStyle(3, 0xffffff, 0.9); g.beginPath(); g.arc(cx, cy, 17, a0, a1); g.strokePath();
+      g.lineStyle(1, 0xcfe8ff, 0.6); g.beginPath(); g.arc(cx, cy, 13, a0 + 0.2, a1 - 0.1); g.strokePath();
+    });
+
+    // ── Hit spark (9×9) — four-point star where a blow lands ─────────────────
+    this.makeTexture('hit_spark', 9, 9, g => {
+      g.fillStyle(0xffdd44); g.fillRect(4, 0, 1, 9); g.fillRect(0, 4, 9, 1);
+      g.fillStyle(0xffffff); g.fillRect(3, 3, 3, 3);
+      g.fillStyle(0xffee88); g.fillRect(2, 2, 1, 1); g.fillRect(6, 2, 1, 1); g.fillRect(2, 6, 1, 1); g.fillRect(6, 6, 1, 1);
+    });
+
     // ── Rat (12×10) — brown rodent ──────────────────────────────────────────
     this.makeTexture('rat', 12, 10, g => {
       const outline = 0x2a1a0a, dark = 0x5a3a1e, mid = 0x7a5032;

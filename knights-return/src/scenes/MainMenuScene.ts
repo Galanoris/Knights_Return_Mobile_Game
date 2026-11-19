@@ -72,7 +72,7 @@ export class MainMenuScene extends Phaser.Scene {
       ['Move',        'Arrow keys / A  D'],
       ['Jump',        'Space / W / Up'],
       ['Double Jump', 'Jump again in air'],
-      ['Punch',       'J  or  Z'],
+      ['Punch',       'J / Z  (forward + up)'],
       ['Pogo strike', 'Down + J/Z  (in air)'],
     ];
     let iy = 55;

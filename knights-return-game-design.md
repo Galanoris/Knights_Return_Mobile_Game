@@ -72,7 +72,7 @@ Later enemies break the symmetry to keep the choice interesting:
 
 | Weapon | Acquired | Properties |
 |--------|----------|-----------|
-| **Fists** | Start | Very short range, fast; must get close |
+| **Fists** | Start | Short, fast **arcing swing** (front and overhead); must get close; swats diving crows |
 | **Sword** | End of Region 2 (taken from a bandit captain) | Better range and arc; enables mid-air **downward pogo strike** that bounces the player off enemies |
 | **Bow** | End of Region 4 | Ranged, fires straight; **limited arrows** (refilled by pickups) so the sword stays relevant |
 
