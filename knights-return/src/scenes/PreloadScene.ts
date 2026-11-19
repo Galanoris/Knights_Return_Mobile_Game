@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PLAYABLE_LEVEL_IDS } from '../data/levels';
+import { MAX_GAME_WIDTH } from '../config';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -7,14 +8,15 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
+    const cx = this.scale.width / 2;
     const bar = this.add.graphics();
     const bg = this.add.graphics();
     bg.fillStyle(0x333333);
-    bg.fillRect(48, 98, 304, 24);
+    bg.fillRect(cx - 152, 98, 304, 24);
     this.load.on('progress', (v: number) => {
       bar.clear();
       bar.fillStyle(0xffdd00);
-      bar.fillRect(50, 100, 300 * v, 20);
+      bar.fillRect(cx - 150, 100, 300 * v, 20);
     });
 
     this.add.text(this.scale.width / 2, 80, 'LOADING...', {
@@ -42,6 +44,7 @@ export class PreloadScene extends Phaser.Scene {
       repeat: 0,
     });
     this.anims.create({ key: 'pogo', frames: [{ key: 'player_pogo' }], frameRate: 1 });
+    this.anims.create({ key: 'fire', frames: [{ key: 'fire1' }, { key: 'fire2' }], frameRate: 6, repeat: -1 });
     this.scene.start('MainMenuScene');
   }
 
@@ -53,36 +56,31 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private generateTextures(): void {
-    // ── Tile (16×16) — two-row stone brick ──────────────────────────────────
-    this.makeTexture('tiles', 16, 16, g => {
-      const mortar = 0x3a4050, mid = 0x6e7a8a, hi = 0x8aaabb, lo = 0x4a5a6a;
-      g.fillStyle(mortar); g.fillRect(0, 0, 16, 16);
-
-      // Brick row 1 (y 0–6): two bricks, split at x 7/8
-      g.fillStyle(mid);
-      g.fillRect(0, 0, 7, 7);
-      g.fillRect(9, 0, 7, 7);
-      g.fillStyle(hi);
-      g.fillRect(0, 0, 6, 1);  g.fillRect(0, 0, 1, 6);   // left brick highlight
-      g.fillRect(9, 0, 6, 1);  g.fillRect(9, 0, 1, 6);   // right brick highlight
-      g.fillStyle(lo);
-      g.fillRect(0, 6, 7, 1);  g.fillRect(6, 0, 1, 7);   // left brick shadow
-      g.fillRect(9, 6, 7, 1);  g.fillRect(15, 0, 1, 7);  // right brick shadow
-
-      // Brick row 2 (y 9–15): three bricks (offset)
-      g.fillStyle(mid);
-      g.fillRect(0, 9, 4, 7);
-      g.fillRect(6, 9, 5, 7);
-      g.fillRect(13, 9, 3, 7);
-      g.fillStyle(hi);
-      g.fillRect(0, 9, 3, 1);  g.fillRect(0, 9, 1, 6);
-      g.fillRect(6, 9, 4, 1);  g.fillRect(6, 9, 1, 6);
-      g.fillRect(13, 9, 2, 1); g.fillRect(13, 9, 1, 6);
-      g.fillStyle(lo);
-      g.fillRect(0, 15, 4, 1); g.fillRect(4, 9, 1, 7);
-      g.fillRect(6, 15, 5, 1); g.fillRect(10, 9, 1, 7);
-      g.fillRect(13, 15, 3, 1); g.fillRect(15, 9, 1, 7);
+    // ── Tiles (32×16 strip) — tile 1: stone brick, tile 2: cracked brick (breakable) ──
+    // Tiled gids: 1 = '#', 2 = 'B' (see scripts/build-level.mjs). Phaser sizes the tileset
+    // from this texture, so maps that declare a single tile still render tile 1 correctly.
+    this.makeTexture('tiles', 32, 16, g => {
+      this.drawBricks(g);
+      g.translateCanvas(16, 0);
+      this.drawBricks(g);
+      g.fillStyle(0x000000, 0.18); g.fillRect(0, 0, 16, 16);          // slightly darker than solid bricks
+      g.fillStyle(0x1a1e28);                                            // crack lines
+      for (const [x, y] of [[2, 0], [3, 1], [3, 2], [4, 3], [5, 4], [5, 5], [6, 6], [7, 7], [7, 8], [8, 9], [9, 10], [9, 11], [10, 12], [11, 13], [11, 14], [12, 15]]) g.fillRect(x, y, 1, 1);
+      for (const [x, y] of [[14, 2], [13, 3], [12, 4], [12, 5], [11, 6], [6, 11], [5, 12], [4, 13], [4, 14]]) g.fillRect(x, y, 1, 1);
+      g.fillStyle(0x9ab4c4);                                            // lit edges along the cracks
+      for (const [x, y] of [[4, 2], [6, 5], [8, 8], [10, 11], [12, 14]]) g.fillRect(x, y, 1, 1);
     });
+
+    // ── Debris chunk (4×4) — flies out when a cracked brick breaks ──────────
+    this.makeTexture('debris', 4, 4, g => {
+      g.fillStyle(0x6e7a8a); g.fillRect(0, 0, 4, 4);
+      g.fillStyle(0x8aaabb); g.fillRect(0, 0, 3, 1);
+      g.fillStyle(0x3a4050); g.fillRect(0, 3, 4, 1); g.fillRect(3, 0, 1, 4);
+    });
+
+    // ── Fire (16×16, 2 frames) — burning debris; hurts like a spike ─────────
+    this.makeTexture('fire1', 16, 16, g => this.drawFire(g, false));
+    this.makeTexture('fire2', 16, 16, g => this.drawFire(g, true));
 
     // ── Player — 12×16 knight centred in a 24×20 frame (room for the swinging fist).
     // Knight-local coords: body x 0–11, y 0–15; the frame adds 6px each side + 4px on top.
@@ -119,6 +117,55 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     this.generateWorldTextures();
+  }
+
+  /** The stone-brick pattern shared by solid tiles and cracked (breakable) bricks. */
+  private drawBricks(g: Phaser.GameObjects.Graphics): void {
+    const mortar = 0x3a4050, mid = 0x6e7a8a, hi = 0x8aaabb, lo = 0x4a5a6a;
+    g.fillStyle(mortar); g.fillRect(0, 0, 16, 16);
+
+    // Brick row 1 (y 0–6): two bricks, split at x 7/8
+    g.fillStyle(mid);
+    g.fillRect(0, 0, 7, 7);
+    g.fillRect(9, 0, 7, 7);
+    g.fillStyle(hi);
+    g.fillRect(0, 0, 6, 1);  g.fillRect(0, 0, 1, 6);   // left brick highlight
+    g.fillRect(9, 0, 6, 1);  g.fillRect(9, 0, 1, 6);   // right brick highlight
+    g.fillStyle(lo);
+    g.fillRect(0, 6, 7, 1);  g.fillRect(6, 0, 1, 7);   // left brick shadow
+    g.fillRect(9, 6, 7, 1);  g.fillRect(15, 0, 1, 7);  // right brick shadow
+
+    // Brick row 2 (y 9–15): three bricks (offset)
+    g.fillStyle(mid);
+    g.fillRect(0, 9, 4, 7);
+    g.fillRect(6, 9, 5, 7);
+    g.fillRect(13, 9, 3, 7);
+    g.fillStyle(hi);
+    g.fillRect(0, 9, 3, 1);  g.fillRect(0, 9, 1, 6);
+    g.fillRect(6, 9, 4, 1);  g.fillRect(6, 9, 1, 6);
+    g.fillRect(13, 9, 2, 1); g.fillRect(13, 9, 1, 6);
+    g.fillStyle(lo);
+    g.fillRect(0, 15, 4, 1); g.fillRect(4, 9, 1, 7);
+    g.fillRect(6, 15, 5, 1); g.fillRect(10, 9, 1, 7);
+    g.fillRect(13, 15, 3, 1); g.fillRect(15, 9, 1, 7);
+  }
+
+  /** Flame on a bed of embers; `alt` shifts the tongues for the second animation frame. */
+  private drawFire(g: Phaser.GameObjects.Graphics, alt: boolean): void {
+    const ember = 0x7a1a0a, red = 0xc8321a, orange = 0xf07a1e, yellow = 0xffd23a, tip = 0xfff2b0;
+    // Embers / burning wood at the base
+    g.fillStyle(0x3a2014); g.fillRect(1, 14, 14, 2);
+    g.fillStyle(ember);    g.fillRect(2, 13, 12, 2);
+    g.fillStyle(red);      g.fillRect(3, 13, 2, 1); g.fillRect(9, 14, 3, 1);
+    // Outer flame
+    g.fillStyle(red);
+    g.fillTriangle(2, 13, 14, 13, alt ? 9 : 7, 1);
+    g.fillTriangle(1, 13, 6, 13, alt ? 2 : 3, 5);
+    g.fillTriangle(10, 13, 15, 13, alt ? 13 : 14, alt ? 4 : 6);
+    // Inner flame
+    g.fillStyle(orange); g.fillTriangle(4, 13, 12, 13, alt ? 8 : 7, 4);
+    g.fillStyle(yellow); g.fillTriangle(6, 13, 10, 13, alt ? 8 : 7, 8);
+    g.fillStyle(tip);    g.fillRect(alt ? 7 : 6, 11, 3, 2);
   }
 
   /** leftLift / rightLift raise that leg by N pixels — alternating them makes the walk cycle. */
@@ -332,18 +379,20 @@ export class PreloadScene extends Phaser.Scene {
       g.fillStyle(0xffffff); g.fillRect(10, 3, 3, 4);  // white cross detail
     });
 
-    // ── Sky background (400×225) — daytime banded blue, dithered band edges ──
-    this.makeTexture('sky', 400, 225, g => {
+    // ── Sky background (MAX_GAME_WIDTH×225) — daytime banded blue, dithered band edges.
+    // As wide as the widest view, so it covers the screen whatever its aspect ratio.
+    const skyW = MAX_GAME_WIDTH;
+    this.makeTexture('sky', skyW, 225, g => {
       // Deeper blue at the top → pale near the horizon
       const shades = [0x5aa6e6, 0x6cb2ea, 0x7ebeef, 0x92caf3, 0xa7d6f7, 0xbde2fa];
       const bandH = Math.ceil(225 / shades.length);
-      shades.forEach((col, i) => { g.fillStyle(col); g.fillRect(0, i * bandH, 400, bandH); });
+      shades.forEach((col, i) => { g.fillStyle(col); g.fillRect(0, i * bandH, skyW, bandH); });
       // 16-bit style dither: sparse row then checker row of the next shade above each edge
       for (let i = 1; i < shades.length; i++) {
         const edge = i * bandH;
         g.fillStyle(shades[i]);
-        for (let x = 0; x < 400; x += 4) g.fillRect(x + ((i & 1) * 2), edge - 2, 1, 1);
-        for (let x = 0; x < 400; x += 2) g.fillRect(x + 1, edge - 1, 1, 1);
+        for (let x = 0; x < skyW; x += 4) g.fillRect(x + ((i & 1) * 2), edge - 2, 1, 1);
+        for (let x = 0; x < skyW; x += 2) g.fillRect(x + 1, edge - 1, 1, 1);
       }
     });
 

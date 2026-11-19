@@ -8,11 +8,12 @@
 // Lines starting with ';' are comments and ignored.
 //
 // Legend
-//   #  solid tile (Platforms layer)
+//   #  solid tile (Platforms layer, tile 1)
+//   B  cracked brick (Platforms layer, tile 2): solid like '#', breaks when punched
 //   .  air
 //   S  player spawn
 //   r  rat            c  crow
-//   ^  spike
+//   ^  spike          f  fire (burning debris — hurts like a spike)
 //   o  coin           R  relic
 //   C  checkpoint     (2-tile-wide full-height trigger column; any row)
 //   E  end trigger    (2-tile-wide full-height trigger column; any row)
@@ -34,6 +35,7 @@ const OBJECT_KINDS = {
   r: { layer: 'Entities',     type: 'rat',   name: 'rat',          w: 12, h: 10 },
   c: { layer: 'Entities',     type: 'crow',  name: 'crow',         w: 12, h: 10 },
   '^': { layer: 'Hazards',    type: 'spike', name: 'spike',        w: 16, h: 16 },
+  f: { layer: 'Hazards',      type: 'fire',  name: 'fire',         w: 16, h: 16 },
   o: { layer: 'Collectibles', type: 'coin',  name: 'coin',         w: 12, h: 12 },
   R: { layer: 'Collectibles', type: 'relic', name: 'relic',        w: 12, h: 12 },
 };
@@ -51,6 +53,7 @@ function build(id) {
 
   const data = new Array(width * height).fill(0);
   const layers = { Entities: [], Triggers: [], Hazards: [], Collectibles: [] };
+  let crackedTiles = 0;
   const triggerCols = new Map(); // col → kind, so a column marked on several rows yields one zone
   let nextId = 1;
   let spawns = 0;
@@ -60,6 +63,9 @@ function build(id) {
       const ch = grid[r][c];
       if (ch === '#') {
         data[r * width + c] = 1;
+      } else if (ch === 'B') {
+        data[r * width + c] = 2;
+        crackedTiles++;
       } else if (OBJECT_KINDS[ch]) {
         const k = OBJECT_KINDS[ch];
         if (k.type === 'spawn') spawns++;
@@ -114,10 +120,12 @@ function build(id) {
     renderorder: 'right-down',
     tiledversion: '1.8.0',
     tileheight: T,
+    // The 'tiles' texture is generated in PreloadScene (tile 1 brick, tile 2 cracked brick).
+    // Maps without cracked bricks keep the original one-tile entry so they stay byte-identical.
     tilesets: [{
-      columns: 1, firstgid: 1, image: '../../tilesets/tiles.png',
-      imageheight: 16, imagewidth: 16, margin: 0, name: 'tiles',
-      spacing: 0, tilecount: 1, tileheight: 16, tilewidth: 16,
+      columns: crackedTiles ? 2 : 1, firstgid: 1, image: '../../tilesets/tiles.png',
+      imageheight: 16, imagewidth: crackedTiles ? 32 : 16, margin: 0, name: 'tiles',
+      spacing: 0, tilecount: crackedTiles ? 2 : 1, tileheight: 16, tilewidth: 16,
     }],
     tilewidth: T,
     type: 'map',
@@ -128,7 +136,8 @@ function build(id) {
   const count = n => layers[n].length;
   console.log(
     `${id}: ${width}×${height} tiles — ${count('Entities') - 1} enemies, ` +
-    `${count('Hazards')} spikes, ${count('Collectibles')} collectibles, ${count('Triggers')} triggers`,
+    `${count('Hazards')} hazards, ${count('Collectibles')} collectibles, ${count('Triggers')} triggers` +
+    (crackedTiles ? `, ${crackedTiles} cracked bricks` : ''),
   );
 }
 

@@ -22,7 +22,7 @@ Panel-by-panel boards and per-level storyboards live in [knights-return-storyboa
 
 | # | Region | Theme | Signature mechanic | Enemies | Hazards |
 |---|--------|-------|-------------------|---------|---------|
-| 1 | The Borderlands | Meadows, farms (tutorial) | None — teach basics | Rats, crows | Fences, small gaps |
+| 1 | The Borderlands | Meadows, farms (tutorial) | None — teach basics | Rats, crows | Fences, small gaps, burning debris (1-4) |
 | 2 | The Darkwood | Dark forest | Fog limits forward visibility | Wolves, bandits | Falling branches, spiked logs |
 | 3 | The Crags | Mountains | Wind gusts alter jump arcs | Goat-riding raiders, vultures | Big cliff gaps, falling boulders |
 | 4 | The Marshes | Swamp | Sinking platforms (timing) | Stilt archers, bog creatures | Poison bogs, geysers |
@@ -59,6 +59,7 @@ Later enemies break the symmetry to keep the choice interesting:
 - **J / X** — attack (fists → sword → bow; see §4)
 - **K / C** — fire bow (once unlocked; sword stays on attack button)
 - **Down + attack while airborne** — downward pogo strike (sword only)
+- **Esc / P** — pause menu (Resume / Restart level / Main menu); on phones, the ‖ button in the top-right corner
 
 ### Feel requirements (non-negotiable for fairness)
 - **Coyote time:** player can still jump ~100 ms after running off a ledge
@@ -164,6 +165,7 @@ One signature mechanic per region keeps regions feeling *distinct*, not merely h
 - Entity system: player, enemies, projectiles, pickups, hazards as components/classes
 - Camera: horizontal follow with small look-ahead in run direction; locked vertical bands per section
 - Save data: per-level crowns, best times, relics, coins, shop upgrades (localStorage / file)
+- **Screen (as built):** the game height is fixed at 225 px, and the width follows the screen's aspect ratio (400–600 px), so phones in landscape fill the screen with no black bars. The HUD and touch buttons respect the notch / home-indicator safe areas. Landscape only (a rotate overlay freezes the game in portrait). On iPhone, fullscreen comes from installing the game as a web app (Add to Home Screen); browsers there can't hide their own UI.
 
 ### Suggested build order (milestones)
 1. **Core feel prototype:** run, variable jump, coyote time, input buffer, one flat test level

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { getNextLevelId } from '../data/levels';
+import { relayoutOnResize } from '../systems/ViewportFit';
+import { getNextLevelId, getLevelConfig, isRegionFinale, REGION_NAMES } from '../data/levels';
 
 export interface ResultsData {
   levelId: string;
@@ -17,6 +18,7 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   create(data: ResultsData): void {
+    relayoutOnResize(this); // centred layout: rebuild if the screen's shape changes
     this.continueCalled = false;
 
     const cx = this.scale.width / 2;
@@ -62,6 +64,14 @@ export class ResultsScene extends Phaser.Scene {
     y += 10;
 
     // Starts dim, brightens after grace period
+    const cfg = getLevelConfig(data.levelId);
+    if (cfg && isRegionFinale(data.levelId)) {
+      this.add.text(cx, y, `${REGION_NAMES[cfg.regionId].toUpperCase()} — COMPLETE`, {
+        fontSize: '9px', color: '#ffdd00', fontFamily: 'monospace',
+      }).setOrigin(0.5);
+      y += 14;
+    }
+
     const nextId = getNextLevelId(data.levelId);
     if (!nextId) {
       this.add.text(cx, y, 'More of the road awaits soon...', {

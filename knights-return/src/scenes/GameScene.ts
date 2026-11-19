@@ -10,11 +10,14 @@ import { CheckpointManager } from '../systems/CheckpointManager';
 import { SaveManager } from '../systems/SaveManager';
 import { CrownRater } from '../systems/CrownRater';
 import { createSkyBackground } from '../systems/SkyBackground';
+import { resetTouchInput } from '../ui/TouchControls';
 import { getLevelConfig } from '../data/levels';
 import { GRAVITY, TILE_SIZE, HIT_INVINCIBILITY_MS } from '../config';
 import { LevelConfig } from '../types/LevelConfig';
 
 const HIT_CONTACT_GRACE_MS = 150;
+const PAUSE_REOPEN_GUARD_MS = 200; // the key that closed the pause menu must not reopen it
+const TILE_CRACKED = 2; // 'B' in levels-src: solid like a brick until punched
 
 interface GameSceneData {
   levelKey: string;
@@ -37,7 +40,9 @@ export class GameScene extends Phaser.Scene {
   // Level state
   private levelId = '';
   private levelKey = '';
-  private levelStartTime = 0;
+  /** Level time, accumulated from frame deltas so it stops while the game is paused. */
+  private levelElapsedMs = 0;
+  private lastResumeAt = -Infinity;
   private levelCoinsCollected = 0;
   private totalCoins = 0;
 
@@ -63,9 +68,11 @@ export class GameScene extends Phaser.Scene {
     this.relicFound = false;
     this.levelCoinsCollected = 0;
     this.totalCoins = 0;
+    this.levelElapsedMs = 0;
+    this.lastResumeAt = -Infinity;
     this.spawnX = TILE_SIZE * 2;
     this.spawnY = TILE_SIZE * 10;
-    // Initialize checkpoint with default spawn (overwritten in parseObjectLayers)
+    // Initialize checkpoint with default spawn (overwritten by parseSpawnPoint)
     this.checkpoint = new CheckpointManager(TILE_SIZE * 2, TILE_SIZE * 10);
   }
 
@@ -86,7 +93,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     const map = this.buildTilemap(this.levelKey);
-    createSkyBackground(this, map.widthInPixels, this.levelId);
+    createSkyBackground(this, map.widthInPixels, map.heightInPixels, this.levelId);
 
     // Physics groups (must exist before parseObjectLayers spawns into them)
     this.spikes  = this.physics.add.staticGroup();
@@ -171,8 +178,33 @@ export class GameScene extends Phaser.Scene {
       this.events.emit('coinChanged', this.levelCoinsCollected);
     }, this);
 
+    // Pause: Esc or P (browsers swallow Esc in fullscreen), or the HUD's pause button.
+    // Keyboard-plugin listeners are cleared on shutdown; scene-event listeners are not → off/on.
+    const onPauseKey = (ev: KeyboardEvent) => { if (!ev.repeat) this.openPause(); };
+    this.input.keyboard!.on('keydown-ESC', onPauseKey);
+    this.input.keyboard!.on('keydown-P', onPauseKey);
+    this.events.off('requestPause', this.openPause, this);
+    this.events.on('requestPause', this.openPause, this);
+    this.events.off(Phaser.Scenes.Events.RESUME, this.onResumed, this);
+    this.events.on(Phaser.Scenes.Events.RESUME, this.onResumed, this);
+
     this.showLevelTitle();
-    this.levelStartTime = this.time.now;
+  }
+
+  /** Freeze the level (physics, tweens, timers, HUD) and show the pause menu on top. */
+  private openPause(): void {
+    if (this.levelEnded || this.scene.isPaused()) return;
+    if (this.game.loop.time - this.lastResumeAt < PAUSE_REOPEN_GUARD_MS) return;
+    this.scene.pause();
+    this.scene.pause('HUDScene');
+    resetTouchInput();
+    this.scene.launch('PauseScene', { levelId: this.levelId, levelKey: this.levelKey });
+    this.scene.bringToTop('PauseScene');
+  }
+
+  private onResumed(): void {
+    this.lastResumeAt = this.game.loop.time;
+    resetTouchInput(); // a finger lifted while paused must not keep the knight running
   }
 
   private buildTilemap(key: string): Phaser.Tilemaps.Tilemap {
@@ -202,6 +234,8 @@ export class GameScene extends Phaser.Scene {
         this.spawnY = obj.y ?? this.spawnY;
       }
     }
+    // Until a checkpoint is touched, respawn where the level starts
+    this.checkpoint.activate(this.spawnX, this.spawnY);
   }
 
   /** Pass 1b: collect zone definitions from Triggers layer (no overlaps yet) */
@@ -225,6 +259,11 @@ export class GameScene extends Phaser.Scene {
         if (obj.type === 'spike') {
           const spike = new Spike(this, obj.x ?? 0, obj.y ?? 0, obj.width ?? 16, obj.height ?? 16);
           this.spikes.add(spike, true);
+        } else if (obj.type === 'fire') {
+          // Burning debris: same damage as spikes, animated flame
+          const fire = new Spike(this, obj.x ?? 0, obj.y ?? 0, obj.width ?? 16, obj.height ?? 16, 'fire1');
+          this.spikes.add(fire, true);
+          fire.play({ key: 'fire', startFrame: Phaser.Math.Between(0, 1) });
         }
       }
     }
@@ -257,10 +296,13 @@ export class GameScene extends Phaser.Scene {
   private createZones(defs: { type: string; x: number; y: number; w: number; h: number }[]): void {
     for (const def of defs) {
       const { x, y, w, h } = def;
+      // Visuals stand on the real ground surface in the zone's column (rooftops, raised ground);
+      // falls back to "ground = bottom 3 rows" if the column is a pit.
+      const cx = x + w / 2;
+      const surface = this.groundSurfaceY(cx) ?? y + h - TILE_SIZE * 3;
       if (def.type === 'checkpoint') {
-        const cx = x + w / 2;
-        const cy = y + h - TILE_SIZE * 4; // 4 tiles above zone bottom = player standing level
-        const visual = this.add.image(cx, cy, 'checkpoint').setDepth(2);
+        const cy = surface - TILE_SIZE; // respawn just above the surface
+        const visual = this.add.image(cx, surface, 'checkpoint').setOrigin(0.5, 1).setDepth(2);
         const zone = this.createPhysicsZone(x + w / 2, y + h / 2, w, h);
         this.physics.add.overlap(this.player, zone, () => {
           if (this.checkpoint.x !== cx) {
@@ -269,7 +311,7 @@ export class GameScene extends Phaser.Scene {
           }
         }, undefined, this);
       } else if (def.type === 'end_trigger') {
-        this.add.image(x + w / 2, y + h - TILE_SIZE * 3, 'banner').setDepth(2); // 3 tiles above zone bottom = ground surface
+        this.add.image(cx, surface, 'banner').setOrigin(0.5, 1).setDepth(2);
         const zone = this.createPhysicsZone(x + w / 2, y + h / 2, w, h);
         this.physics.add.overlap(this.player, zone, () => {
           if (!this.levelEnded && this.player.fsm.state !== 'dead') {
@@ -278,6 +320,20 @@ export class GameScene extends Phaser.Scene {
         }, undefined, this);
       }
     }
+  }
+
+  /**
+   * Top y of the solid tile column that reaches the map bottom at worldX — i.e. the ground
+   * or rooftop a marker stands on (floating platforms above are ignored). Null over a pit.
+   */
+  private groundSurfaceY(worldX: number): number | null {
+    const map = this.platforms.tilemap;
+    const col = Math.floor(worldX / TILE_SIZE);
+    const solid = (row: number) => (this.platforms.getTileAt(col, row)?.index ?? -1) > 0;
+    let row = map.height - 1;
+    if (!solid(row)) return null;
+    while (row > 0 && solid(row - 1)) row--;
+    return row * TILE_SIZE;
   }
 
   private collectCoin(coin: Phaser.Physics.Arcade.Image): void {
@@ -300,7 +356,7 @@ export class GameScene extends Phaser.Scene {
 
   private triggerLevelEnd(): void {
     this.levelEnded = true;
-    const elapsed = this.time.now - this.levelStartTime;
+    const elapsed = this.levelElapsedMs;
 
     // Freeze player in place
     (this.player.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
@@ -330,7 +386,9 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (!this.player || !this.inputMgr || this.levelEnded) return;
 
+    this.levelElapsedMs += delta; // update() doesn't run while paused, so pauses don't count
     this.player.update(delta, this.inputMgr);
+    this.breakCrackedTiles();
     this.camera.update();
     for (const e of this.enemies.getChildren()) {
       (e as Enemy).update();
@@ -358,13 +416,58 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** "LEVEL 1-2" card that fades out shortly after the level starts. */
+  /** "LEVEL 1-2" card (plus the level's name) that fades out shortly after the level starts. */
   private showLevelTitle(): void {
-    const title = this.add.text(this.scale.width / 2, 70, `LEVEL ${this.levelId}`, {
-      fontSize: '14px', color: '#ffdd00', fontFamily: 'monospace',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
-    this.tweens.add({ targets: title, alpha: 0, delay: 1200, duration: 500, onComplete: () => title.destroy() });
+    const cx = this.scale.width / 2;
+    const parts: Phaser.GameObjects.Text[] = [
+      this.add.text(cx, 70, `LEVEL ${this.levelId}`, {
+        fontSize: '14px', color: '#ffdd00', fontFamily: 'monospace',
+        stroke: '#000000', strokeThickness: 3,
+      }),
+    ];
+    if (this.levelConfig.name) {
+      parts.push(this.add.text(cx, 88, this.levelConfig.name.toUpperCase(), {
+        fontSize: '8px', color: '#ffffff', fontFamily: 'monospace',
+        stroke: '#000000', strokeThickness: 2,
+      }));
+    }
+    for (const t of parts) t.setOrigin(0.5).setScrollFactor(0).setDepth(100);
+    this.tweens.add({ targets: parts, alpha: 0, delay: 1400, duration: 500, onComplete: () => parts.forEach(t => t.destroy()) });
+  }
+
+  /**
+   * A live swing (or pogo) breaks every cracked-brick tile its hitbox touches. Cracked bricks are
+   * ordinary tiles, so walls made of them collide exactly like solid walls (no seams for the
+   * player to snag on); breaking removes the tile and recalculates the neighbours' faces.
+   */
+  private breakCrackedTiles(): void {
+    const hb = this.player.attackHitbox.body as Phaser.Physics.Arcade.Body;
+    if (!hb.enable) return;
+    const tiles = this.platforms.getTilesWithinWorldXY(hb.x, hb.y, hb.width, hb.height, { isNotEmpty: true });
+    let broke = false;
+    for (const tile of tiles) {
+      if (tile.index !== TILE_CRACKED) continue;
+      this.platforms.removeTileAt(tile.x, tile.y, true, true);
+      this.spawnDebris(tile.getCenterX(), tile.getCenterY());
+      broke = true;
+    }
+    if (broke) this.cameras.main.shake(80, 0.004);
+  }
+
+  private spawnDebris(x: number, y: number): void {
+    for (let i = 0; i < 5; i++) {
+      const chunk = this.add.image(x + Phaser.Math.Between(-4, 4), y + Phaser.Math.Between(-4, 4), 'debris').setDepth(10);
+      this.tweens.add({
+        targets: chunk,
+        x: chunk.x + Phaser.Math.Between(-16, 16),
+        y: chunk.y + Phaser.Math.Between(-10, 14),
+        angle: Phaser.Math.Between(-180, 180),
+        alpha: 0,
+        duration: 350,
+        ease: 'Quad.easeOut',
+        onComplete: () => chunk.destroy(),
+      });
+    }
   }
 
   private onAttackHit(e: Enemy): void {

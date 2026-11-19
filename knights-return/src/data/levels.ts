@@ -1,11 +1,19 @@
-import { LevelConfig } from '../types/LevelConfig';
+import { LevelConfig, RegionId } from '../types/LevelConfig';
+
+export const REGION_NAMES: Record<RegionId, string> = {
+  1: 'The Borderlands',
+  2: 'The Darkwood',
+  3: 'The Crags',
+  4: 'The Marshes',
+  5: 'The Occupied Castle',
+};
 
 export const LEVELS: LevelConfig[] = [
   // Region 1 — The Borderlands
-  { id: '1-1', regionId: 1, tilemapKey: '1-1', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
-  { id: '1-2', regionId: 1, tilemapKey: '1-2', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
-  { id: '1-3', regionId: 1, tilemapKey: '1-3', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
-  { id: '1-4', regionId: 1, tilemapKey: '1-4', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
+  { id: '1-1', name: 'Leaving the Border Inn', regionId: 1, tilemapKey: '1-1', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
+  { id: '1-2', name: 'The Old Farm Road',      regionId: 1, tilemapKey: '1-2', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
+  { id: '1-3', name: 'Fenceline Ridge',        regionId: 1, tilemapKey: '1-3', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [90000, 120000, 180000] },
+  { id: '1-4', name: 'The Burning Watchtower', regionId: 1, tilemapKey: '1-4', musicKey: 'music_region1', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [100000, 130000, 180000] },
   // Region 2 — The Darkwood
   { id: '2-1', regionId: 2, tilemapKey: '2-1', musicKey: 'music_region2', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [100000, 130000, 180000] },
   { id: '2-2', regionId: 2, tilemapKey: '2-2', musicKey: 'music_region2', hasCheckpoint: true,  isChaseLevel: false, isBossLevel: false, crownThresholds: [100000, 130000, 180000] },
@@ -33,12 +41,20 @@ export function getLevelConfig(id: string): LevelConfig | undefined {
 }
 
 /** Levels that have a built tilemap (public/assets/tilemaps/levels/<id>.json). Extend as levels ship. */
-export const PLAYABLE_LEVEL_IDS: string[] = ['1-1', '1-2', '1-3'];
+export const PLAYABLE_LEVEL_IDS: string[] = ['1-1', '1-2', '1-3', '1-4'];
 
 /** The playable level after `id`, or null when there is no more content yet. */
 export function getNextLevelId(id: string): string | null {
   const i = PLAYABLE_LEVEL_IDS.indexOf(id);
   return i >= 0 && i + 1 < PLAYABLE_LEVEL_IDS.length ? PLAYABLE_LEVEL_IDS[i + 1] : null;
+}
+
+/** True when `id` is the last level of its region (the next level belongs to another region, or there is none). */
+export function isRegionFinale(id: string): boolean {
+  const i = LEVELS.findIndex(l => l.id === id);
+  if (i < 0) return false;
+  const next = LEVELS[i + 1];
+  return !next || next.regionId !== LEVELS[i].regionId;
 }
 
 /** First playable level without a crown rating yet, else the last playable level. */

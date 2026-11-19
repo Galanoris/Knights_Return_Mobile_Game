@@ -18,8 +18,10 @@ export const KNOCKBACK_VELOCITY = 200; // px/s horizontal knockback
 export const CAM_LOOK_AHEAD = 60;    // px ahead of player
 
 // Game
-export const GAME_WIDTH = 400;
-export const GAME_HEIGHT = 225;      // 16:9, scaled up 4× → 1600×900 on most screens
+export const GAME_WIDTH = 400;       // design / minimum width (16:9)
+export const GAME_HEIGHT = 225;      // fixed: sets the pixel-art scale on every screen
+export const MAX_GAME_WIDTH = 600;   // widest view (≈ 2.67:1); wider screens get thin side bars
+// The actual width follows the screen's aspect ratio — see systems/ViewportFit.ts
 export const TARGET_FPS = 60;
 
 // Regions

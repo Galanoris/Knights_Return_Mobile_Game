@@ -41,7 +41,7 @@ Companion to [knights-return-game-design.md](knights-return-game-design.md). It 
 |-------|-------|------|
 | 1-1 | Aldric at a crossroads signpost reading "Highmoor ← 5 days". | *"The farm road west. Quiet. Too quiet."* |
 | 1-2 | Crows circling over a ruined barn, with one flying off toward the castle. | *"The crows follow. Someone wants to know where I am."* |
-| 1-3 | A watchtower on the ridge, burning at night. | *"Vargan's men hold the old tower. The border ends there."* |
+| 1-3 | Smoke rising from the old watchtower on the ridge. | *"Vargan's men hold the old tower. The border ends there."* |
 
 ### Region 1 → Region 2 — "The Edge of the Wood" (after 1-4, ~12 s)
 
@@ -69,7 +69,7 @@ Shared constraints, from `config.ts` and `Player.ts`:
 - Full speed = 8.75 tiles/s. A 320-tile level is ~37 s of pure running, and ~70–100 s with fighting and coins. That is well inside the 3-minute cap.
 - Ground sits at rows 11–13 on a 14-row map. The checkpoint and the banner need flat ground at row 11.
 
-**Map legend** for the excerpts below (and the `levels-src/*.txt` files): `#` solid · `S` spawn · `r` rat · `c` crow · `^` spike · `o` coin · `R` relic · `C` checkpoint · `E` banner/end.
+**Map legend** for the excerpts below (and the `levels-src/*.txt` files): `#` solid · `S` spawn · `r` rat · `c` crow · `^` spike · `o` coin · `R` relic · `C` checkpoint · `E` banner/end · `f` fire (burning debris) · `B` cracked brick (punch to break).
 
 ### 1-1 "Leaving the Border Inn" (built)
 - **Teaches:** run, jump, pits, spikes, rats, the punch.
@@ -123,7 +123,7 @@ Gauntlet sample (cols 228–262): a crow over the pit, then rat + spikes, then a
 ### 1-3 "Fenceline Ridge" (built — `knights-return/levels-src/1-3.txt`)
 - **Story:** climbing out of the farmland toward the ridge and the watchtower.
 - **Teaches:** **fences** (1–2 tile solid blocks you hop over) and **vertical tiers**: pits too wide for one jump, crossed on stepping platforms.
-- **Size:** 360 tiles · 8 rats + 9 crows · 7 spikes · ~50 coins · checkpoint col 172 · banner col 352.
+- **Size:** 360 tiles · 9 rats + 9 crows · 7 spikes · ~50 coins · checkpoint col 172 · banner col 352.
 
 | Phase | Cols | Beats |
 |-------|------|-------|
@@ -142,9 +142,10 @@ First tier crossing (cols 56–76):
 ```
 Rat pen and spike strip (cols 82–116):
 ```
+...................................
 ...........................oooo....
 ..#.........#......................
-..#..ooooo..#.............#.^^.#...
+..#..ooooor.#.............#.^^.#...
 ###################################
 ```
 **Secret (cols 120–140):** while climbing the staircase, the player can double-jump *back and up* from the top tier to a ledge at row 1. The relic and 2 coins are visible from the climb, so the secret teaches looking up.
@@ -174,11 +175,67 @@ Second tier crossing (cols 202–216): the crow above dives onto the steps.
 ##...........##
 ```
 
-### 1-4 "The Burning Watchtower" (not built — outline)
-- **Story:** the region finale. Vargan's scouts hold the old border tower.
-- **Teaches:** nothing new. This is the **Region 1 exam**: fences, tiers, rats and crows at full density, with fewer coins.
-- **Shape:** the first half runs along the ridge. The second half climbs the tower exterior (tall tier stacks, crows from above). The banner is planted on the tower roof (needs a variant of the end trigger for raised ground).
-- **Secret:** a breakable-wall nook inside the tower base. This needs breakable tiles, so it waits for M6 (crates).
+### 1-4 "The Burning Watchtower" (built — `knights-return/levels-src/1-4.txt`)
+- **Story:** the region finale. Vargan's scouts hold the old border tower, which is burning.
+- **Teaches:** nothing new to fight. This is the **Region 1 exam**: fences, pens, tier crossings, rats and crows at full density, with fewer coins. Two new pieces of scenery:
+  - **fire** (burning debris): hurts exactly like spikes;
+  - **cracked bricks**: break with one punch.
+- **Shape:** a **tall level** (24 rows instead of 14). The ridge runs along the bottom, then the camera follows you **up a stepped tower** of four floors to plant the banner on the roof.
+- **Size:** 272 tiles × 24 rows · 12 rats + 13 crows · 10 fires + 4 spikes · 16 coins · one checkpoint (col 193, at the tower's foot) · banner on the roof (col 267).
+
+| Phase | Cols | Beats |
+|-------|------|-------|
+| Intro | 0–40 | A fence, a 3-wide pit, the **first fire**, a crow, a rat, and a 4-wide pit with a crow above it. |
+| Combination | 42–150 | Rat pen; 12-wide tier crossing with a crow above; fire, rat, fence and spikes in a row; 3-tier staircase with a crow; fence → fire → fence. |
+| Gauntlet | 150–192 | Crow over a pit, a pen with a crow above it, spikes, fire, the last pit. **Checkpoint** at the tower's foot. |
+| The climb | 196–271 | Four floors, each 2 rows up via a step block against the next wall. Rats patrol each floor, crows dive from above, and fire burns on the floors. The roof has two fires, two crows, a rat and the banner. |
+
+Ridge sample, rat pen + tier crossing (cols 42–75):
+```
+........................c.........
+..................................
+..................................
+..................................
+.........................##.......
+..................................
+....#........#.......##...........
+....#..r..oo.#....................
+##################............####
+```
+Tower cross-section (cols 194–271). Each floor is reached by a step against the next wall, so an overshooting jump bumps the wall and still lands on the step:
+```
+..............................................................................
+.............................................................c.......c........
+..............................................................................
+................................................c.......oo....................
+...........................................................f....r..f.....E....
+......................................................########################
+......................................................########################
+..................................c................###########################
+..........................................r..f.....###########################
+.......................................#######################################
+.......................................#######################################
+................c...................##########################################
+...........................ff.r.....##########################################
+........................######################################################
+........................######################################################
+.....................#########################################################
+..............r......#########################################################
+.........#####################################################################
+.........#####################################################################
+....###..B....################################################################
+....###..BooRo################################################################
+##############################################################################
+```
+**Secret (cols 196–209):** the ground step at the tower's foot stands free. Behind it is a 2-wide nook in front of **cracked bricks**. Overshooting the step drops you into the nook, so the secret finds curious players. One punch breaks both bricks and opens an alcove with the relic and 3 coins. You can see them through the gap, which teaches that cracked bricks break. To get out: hop back onto the step, or double-jump straight onto the first floor.
+```
+............r.
+.......#######
+.......#######
+..###..B....##
+..###..BooRo##
+##############
+```
 
 ### Crown thresholds (starting values — tune after playtesting)
 | Level | 3 crowns | 2 crowns | 1 crown |
@@ -186,6 +243,7 @@ Second tier crossing (cols 202–216): the crow above dives onto the steps.
 | 1-1 | ≤ 90 s | ≤ 120 s | finish |
 | 1-2 | ≤ 90 s | ≤ 120 s | finish |
 | 1-3 | ≤ 90 s | ≤ 120 s | finish |
+| 1-4 | ≤ 100 s | ≤ 130 s | finish |
 
 Collecting 75%+ of coins adds +1 crown (`CrownRater`).
 
@@ -193,6 +251,6 @@ Collecting 75%+ of coins adds +1 crown (`CrownRater`).
 
 ## 4. Editing levels
 
-1. Edit `knights-return/levels-src/<id>.txt`. One line per tile row, all lines the same width. Lines starting with `;` are comments.
+1. Edit `knights-return/levels-src/<id>.txt`. One line per tile row, all lines the same width. Lines starting with `;` are comments. Use the map legend above. Levels can be taller than 14 rows (1-4 is 24); the camera follows vertically, and checkpoints and the banner stand on whatever ground or roof is below them.
 2. Run `npm run levels` from `knights-return/`. It rewrites `public/assets/tilemaps/levels/<id>.json`.
 3. A new level also needs its id added to `PLAYABLE_LEVEL_IDS` in `src/data/levels.ts`.

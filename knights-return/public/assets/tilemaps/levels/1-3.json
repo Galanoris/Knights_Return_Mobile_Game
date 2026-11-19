@@ -5184,10 +5184,10 @@
           "properties": []
         },
         {
-          "id": 56,
+          "id": 54,
           "name": "rat",
           "type": "rat",
-          "x": 2400,
+          "x": 1472,
           "y": 160,
           "width": 12,
           "height": 10,
@@ -5199,7 +5199,7 @@
           "id": 57,
           "name": "rat",
           "type": "rat",
-          "x": 2560,
+          "x": 2400,
           "y": 160,
           "width": 12,
           "height": 10,
@@ -5208,10 +5208,10 @@
           "properties": []
         },
         {
-          "id": 60,
+          "id": 58,
           "name": "rat",
           "type": "rat",
-          "x": 3552,
+          "x": 2560,
           "y": 160,
           "width": 12,
           "height": 10,
@@ -5223,7 +5223,7 @@
           "id": 61,
           "name": "rat",
           "type": "rat",
-          "x": 3808,
+          "x": 3552,
           "y": 160,
           "width": 12,
           "height": 10,
@@ -5232,10 +5232,10 @@
           "properties": []
         },
         {
-          "id": 64,
+          "id": 62,
           "name": "rat",
           "type": "rat",
-          "x": 4288,
+          "x": 3808,
           "y": 160,
           "width": 12,
           "height": 10,
@@ -5247,6 +5247,18 @@
           "id": 65,
           "name": "rat",
           "type": "rat",
+          "x": 4288,
+          "y": 160,
+          "width": 12,
+          "height": 10,
+          "rotation": 0,
+          "visible": true,
+          "properties": []
+        },
+        {
+          "id": 66,
+          "name": "rat",
+          "type": "rat",
           "x": 4640,
           "y": 160,
           "width": 12,
@@ -5256,7 +5268,7 @@
           "properties": []
         },
         {
-          "id": 67,
+          "id": 68,
           "name": "rat",
           "type": "rat",
           "x": 4928,
@@ -5268,7 +5280,7 @@
           "properties": []
         },
         {
-          "id": 74,
+          "id": 75,
           "name": "rat",
           "type": "rat",
           "x": 5504,
@@ -5292,7 +5304,7 @@
       "name": "Triggers",
       "objects": [
         {
-          "id": 75,
+          "id": 76,
           "name": "checkpoint",
           "type": "checkpoint",
           "x": 2752,
@@ -5304,7 +5316,7 @@
           "properties": []
         },
         {
-          "id": 76,
+          "id": 77,
           "name": "end_trigger",
           "type": "end_trigger",
           "x": 5632,
@@ -5328,7 +5340,7 @@
       "name": "Hazards",
       "objects": [
         {
-          "id": 54,
+          "id": 55,
           "name": "spike",
           "type": "spike",
           "x": 1760,
@@ -5340,7 +5352,7 @@
           "properties": []
         },
         {
-          "id": 55,
+          "id": 56,
           "name": "spike",
           "type": "spike",
           "x": 1776,
@@ -5352,7 +5364,7 @@
           "properties": []
         },
         {
-          "id": 58,
+          "id": 59,
           "name": "spike",
           "type": "spike",
           "x": 3072,
@@ -5364,7 +5376,7 @@
           "properties": []
         },
         {
-          "id": 59,
+          "id": 60,
           "name": "spike",
           "type": "spike",
           "x": 3088,
@@ -5376,7 +5388,7 @@
           "properties": []
         },
         {
-          "id": 62,
+          "id": 63,
           "name": "spike",
           "type": "spike",
           "x": 3904,
@@ -5388,7 +5400,7 @@
           "properties": []
         },
         {
-          "id": 63,
+          "id": 64,
           "name": "spike",
           "type": "spike",
           "x": 3920,
@@ -5400,7 +5412,7 @@
           "properties": []
         },
         {
-          "id": 66,
+          "id": 67,
           "name": "spike",
           "type": "spike",
           "x": 4704,
@@ -5940,7 +5952,7 @@
           "properties": []
         },
         {
-          "id": 68,
+          "id": 69,
           "name": "coin",
           "type": "coin",
           "x": 5376,
@@ -5952,7 +5964,7 @@
           "properties": []
         },
         {
-          "id": 69,
+          "id": 70,
           "name": "coin",
           "type": "coin",
           "x": 5392,
@@ -5964,7 +5976,7 @@
           "properties": []
         },
         {
-          "id": 70,
+          "id": 71,
           "name": "coin",
           "type": "coin",
           "x": 5408,
@@ -5976,7 +5988,7 @@
           "properties": []
         },
         {
-          "id": 71,
+          "id": 72,
           "name": "coin",
           "type": "coin",
           "x": 5424,
@@ -5988,7 +6000,7 @@
           "properties": []
         },
         {
-          "id": 72,
+          "id": 73,
           "name": "coin",
           "type": "coin",
           "x": 5440,
@@ -6000,7 +6012,7 @@
           "properties": []
         },
         {
-          "id": 73,
+          "id": 74,
           "name": "coin",
           "type": "coin",
           "x": 5456,
@@ -6020,7 +6032,7 @@
     }
   ],
   "nextlayerid": 6,
-  "nextobjectid": 77,
+  "nextobjectid": 78,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.8.0",

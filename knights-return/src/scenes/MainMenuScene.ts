@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { relayoutOnResize, getSafeInsets } from '../systems/ViewportFit';
 import { SaveManager } from '../systems/SaveManager';
 import { getContinueLevelId } from '../data/levels';
 
@@ -8,6 +9,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    relayoutOnResize(this); // centred layout: rebuild if the screen's shape changes
     const cx = this.scale.width / 2;
     const h  = this.scale.height;
 
@@ -55,7 +57,7 @@ export class MainMenuScene extends Phaser.Scene {
     menuObjs.push(this.makeButton(cx, nextY, 'INSTRUCTIONS', showInstr));
 
     menuObjs.push(
-      this.add.text(this.scale.width - 4, h - 4, 'v0.1', {
+      this.add.text(this.scale.width - 4 - getSafeInsets(this.scale).right, h - 4 - getSafeInsets(this.scale).bottom, 'v0.1', {
         fontSize: '6px', color: '#444466', fontFamily: 'monospace',
       }).setOrigin(1, 1),
     );
@@ -74,6 +76,7 @@ export class MainMenuScene extends Phaser.Scene {
       ['Double Jump', 'Jump again in air'],
       ['Punch',       'J / Z  (forward + up)'],
       ['Pogo strike', 'Down + J/Z  (in air)'],
+      ['Pause',       'Esc / P'],
     ];
     let iy = 55;
     for (const [label, value] of rows) {

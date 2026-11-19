@@ -233,7 +233,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (s !== 'attack' && s !== 'pogo' && s !== 'hurt') {
         if (!onGround && body.velocity.y > 0 && s !== 'fall') {
           this.fsm.transition('fall');
-        } else if (onGround) {
+        } else if (onGround && body.velocity.y >= 0) {
+          // `onGround` was sampled before this frame's jump; a jump that just fired has set an
+          // upward velocity — don't overwrite it with idle/run, or the rise isn't a 'jump'
+          // (no jump cut, no double jump, no pogo until the apex).
           if (Math.abs(body.velocity.x) > 5 && (s === 'idle' || s === 'fall' || s === 'jump')) {
             this.fsm.transition('run');
           } else if (Math.abs(body.velocity.x) <= 5 && (s === 'run' || s === 'fall' || s === 'jump')) {

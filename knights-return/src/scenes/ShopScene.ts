@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { relayoutOnResize } from '../systems/ViewportFit';
 import { SaveManager } from '../systems/SaveManager';
 import { SHOP_ITEMS } from '../data/shop';
 
@@ -8,6 +9,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create(): void {
+    relayoutOnResize(this); // centred layout: rebuild if the screen's shape changes
     const cx = this.scale.width / 2;
     const save = SaveManager.get();
 

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GRAVITY, TARGET_FPS } from './config';
+import { GAME_HEIGHT, GRAVITY, TARGET_FPS } from './config';
+import { computeGameWidth, installViewportFit } from './systems/ViewportFit';
+import { maybeShowInstallHint } from './ui/InstallHint';
 
 import { BootScene }      from './scenes/BootScene';
 import { PreloadScene }   from './scenes/PreloadScene';
@@ -9,10 +11,11 @@ import { HUDScene }       from './scenes/HUDScene';
 import { ShopScene }      from './scenes/ShopScene';
 import { ResultsScene }   from './scenes/ResultsScene';
 import { GameOverScene }  from './scenes/GameOverScene';
+import { PauseScene }     from './scenes/PauseScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: GAME_WIDTH,
+  width: computeGameWidth(),   // follows the screen's aspect ratio (no side bars); height is fixed
   height: GAME_HEIGHT,
   backgroundColor: '#1a1a2e',
   pixelArt: true,           // disables anti-aliasing for crisp pixel rendering
@@ -39,10 +42,13 @@ const config: Phaser.Types.Core.GameConfig = {
     ShopScene,
     ResultsScene,
     GameOverScene,
+    PauseScene,      // last → renders above GameScene and HUDScene
   ],
 };
 
 const game = new Phaser.Game(config);
+installViewportFit(game);
+maybeShowInstallHint();
 
 // Dev-only handle for debugging / automated smoke tests (stripped from production builds)
 if (import.meta.env.DEV) {

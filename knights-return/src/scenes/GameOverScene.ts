@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { relayoutOnResize } from '../systems/ViewportFit';
 
 export class GameOverScene extends Phaser.Scene {
   private restartCalled = false;
@@ -8,6 +9,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(data: { levelId?: string }): void {
+    relayoutOnResize(this); // centred layout: rebuild if the screen's shape changes
     this.restartCalled = false;
     const levelId = data.levelId ?? '1-1';
 
