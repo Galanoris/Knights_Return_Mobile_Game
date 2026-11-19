@@ -14,12 +14,15 @@ export class HUDScene extends Phaser.Scene {
   create(): void {
     this.heartsText = this.add.text(6, 6, '♥♥♥', {
       fontSize: '10px', color: '#ff4444', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 2,
     });
     this.livesText = this.add.text(6, 19, 'x3', {
       fontSize: '8px', color: '#dddddd', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 2,
     });
     this.coinText = this.add.text(6, 30, '$ 000', {
       fontSize: '8px', color: '#ffdd00', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 2,
     });
 
     if (this.sys.game.device.input.touch) {
@@ -34,7 +37,7 @@ export class HUDScene extends Phaser.Scene {
     this.relicNotice = this.add.text(
       this.scale.width / 2, 12,
       '✦ RELIC FOUND ✦',
-      { fontSize: '9px', color: '#00ffaa', fontFamily: 'monospace' },
+      { fontSize: '9px', color: '#00ffaa', fontFamily: 'monospace', stroke: '#000000', strokeThickness: 2 },
     ).setOrigin(0.5).setAlpha(0);
 
     // Subscribe to GameScene events

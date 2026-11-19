@@ -256,33 +256,43 @@ export class PreloadScene extends Phaser.Scene {
       g.fillStyle(0xffffff); g.fillRect(10, 3, 3, 4);  // white cross detail
     });
 
-    // ── Sky background (400×225) — gradient with stars ───────────────────────
+    // ── Sky background (400×225) — daytime banded blue, dithered band edges ──
     this.makeTexture('sky', 400, 225, g => {
-      // Gradient bands from top (darkest) to bottom
-      const bands: [number, number, number][] = [
-        [0,   50, 0x08081a],
-        [50,  50, 0x0a0a1e],
-        [100, 50, 0x0c0c22],
-        [150, 50, 0x0f0f26],
-        [200, 25, 0x111128],
-      ];
-      for (const [y, h, col] of bands) {
-        g.fillStyle(col); g.fillRect(0, y, 400, h);
+      // Deeper blue at the top → pale near the horizon
+      const shades = [0x5aa6e6, 0x6cb2ea, 0x7ebeef, 0x92caf3, 0xa7d6f7, 0xbde2fa];
+      const bandH = Math.ceil(225 / shades.length);
+      shades.forEach((col, i) => { g.fillStyle(col); g.fillRect(0, i * bandH, 400, bandH); });
+      // 16-bit style dither: sparse row then checker row of the next shade above each edge
+      for (let i = 1; i < shades.length; i++) {
+        const edge = i * bandH;
+        g.fillStyle(shades[i]);
+        for (let x = 0; x < 400; x += 4) g.fillRect(x + ((i & 1) * 2), edge - 2, 1, 1);
+        for (let x = 0; x < 400; x += 2) g.fillRect(x + 1, edge - 1, 1, 1);
       }
-      // Stars — fixed pixel dots at scattered positions
-      const stars = [
-        [30, 12], [75, 7],  [122, 20], [180, 4],  [241, 17],
-        [302, 9], [352, 24],[45, 38],  [162, 33], [282, 41],
-        [381, 6], [92, 48], [322, 16], [141, 60], [201, 70],
-        [62, 80], [261, 85],[341, 72], [15, 65],  [200, 22],
-        [111, 90],[350, 58],[50, 110], [290, 100],[170, 105],
-      ];
-      g.fillStyle(0xffffff);
-      for (const [sx, sy] of stars) { g.fillRect(sx, sy, 1, 1); }
-      // A handful of slightly larger "bright" stars (2px)
-      g.fillRect(150, 14, 2, 1);
-      g.fillRect(222, 50, 1, 2);
-      g.fillRect(318, 29, 2, 1);
     });
+
+    // ── Clouds — puffy white tops, flat pale-blue underside ─────────────────
+    // Each puff is [cx, cy, r] for the shadow silhouette; the white body is the
+    // same silhouette shifted up 2px, leaving a 2px shadow rim along the bottom.
+    const drawCloud = (
+      g: Phaser.GameObjects.Graphics,
+      puffs: [number, number, number][],
+      base: [number, number, number, number],
+    ) => {
+      const shadow = 0xd6e6f4, body = 0xf4f9ff, hi = 0xffffff;
+      const [bx, by, bw, bh] = base;
+      g.fillStyle(shadow);
+      for (const [cx, cy, r] of puffs) g.fillCircle(cx, cy, r);
+      g.fillRect(bx, by, bw, bh);
+      g.fillStyle(body);
+      for (const [cx, cy, r] of puffs) g.fillCircle(cx, cy - 2, r);
+      g.fillRect(bx, by - 2, bw, bh - 1);
+      g.fillStyle(hi);
+      for (const [cx, cy, r] of puffs) g.fillCircle(cx - 1, cy - 3, Math.max(1, Math.floor(r / 2)));
+    };
+    this.makeTexture('cloud_big', 48, 20, g => drawCloud(g,
+      [[10, 14, 5], [19, 11, 8], [30, 12, 7], [39, 15, 4]], [8, 15, 33, 5]));
+    this.makeTexture('cloud_small', 32, 14, g => drawCloud(g,
+      [[8, 9, 4], [15, 8, 5], [24, 9, 4]], [6, 10, 20, 4]));
   }
 }

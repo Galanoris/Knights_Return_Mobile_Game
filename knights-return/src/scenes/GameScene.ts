@@ -9,6 +9,7 @@ import { CameraController } from '../systems/CameraController';
 import { CheckpointManager } from '../systems/CheckpointManager';
 import { SaveManager } from '../systems/SaveManager';
 import { CrownRater } from '../systems/CrownRater';
+import { createSkyBackground } from '../systems/SkyBackground';
 import { getLevelConfig } from '../data/levels';
 import { GRAVITY, TILE_SIZE, HIT_INVINCIBILITY_MS } from '../config';
 import { LevelConfig } from '../types/LevelConfig';
@@ -65,9 +66,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(_data: GameSceneData): void {
-    // Sky background — fixed in camera space, rendered behind everything
-    this.add.image(0, 0, 'sky').setOrigin(0, 0).setScrollFactor(0).setDepth(-10);
-
     this.physics.world.gravity.y = GRAVITY;
 
     const config = getLevelConfig(this.levelId);
@@ -84,6 +82,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     const map = this.buildTilemap(this.levelKey);
+    createSkyBackground(this, map.widthInPixels, this.levelId);
 
     // Physics groups (must exist before parseObjectLayers spawns into them)
     this.spikes  = this.physics.add.staticGroup();

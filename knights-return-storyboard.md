@@ -80,23 +80,23 @@ Shared constraints, from `config.ts` and `Player.ts`:
 ### 1-2 "The Old Farm Road" (built — `knights-return/levels-src/1-2.txt`)
 - **Story:** the open farm road. Vargan's crows find Aldric.
 - **Teaches:** **crows.** They hover, patrol ±3 tiles, and **dive at where the player was** when the player passes underneath (aimed once, so stepping forward dodges the dive). A red tint warns that a dive is coming. A crow dies to a stomp, a punch or the pogo.
-- **Size:** 320 tiles · 13 crows + 10 rats · 8 spikes · ~50 coins · checkpoint col 152 · banner col 314.
+- **Size:** 320 tiles · 13 crows + 10 rats · 8 spikes · ~60 coins · checkpoint col 152 · banner col 314.
 
 | Phase | Cols | Beats |
 |-------|------|-------|
-| Intro (0:00–0:45) | 0–75 | Flat, safe ground. **Crow #1** over open ground, with a coin arc that tempts the player to jump into its dive. **Crow #2** sits beside a low step (col 46) so the player can try stomping it. First small pit at col 72. |
+| Intro (0:00–0:45) | 0–75 | Small pits every ~20 tiles from the start (cols 18, 41, 62, 72), each with a coin arc that shows the jump. **Crow #1** flies over the stretch between the first two pits, with a coin arc that tempts the player to jump into its dive. **Crow #2** sits beside a low step (col 46) so the player can try stomping it. |
 | Combination | 75–210 | Rat on the ground with a crow above it (cols 84–88). A crow guards a pit (col 105). **Secret** at cols 114–121. Rats and spikes alternate. **Checkpoint** at col 152, then a step platform with a crow above it. |
 | Gauntlet (2:15–) | 210–314 | Rat/crow pairs every ~10 tiles, crows hanging over pits 5–8, spikes right after landing spots. Coin run, last rat, banner. |
 
-First crows (cols 24–58): the coin arc sits right in crow #1's dive path, and the low step lets the player stomp crow #2.
+First crows and early pits (cols 14–58): a 2-wide pit, then crow #1 above a coin arc, then a 3-wide pit just before the low step for crow #2.
 ```
-............................c......
-......c............................
-...................................
-....ooooo..........................
-......................####.........
-..................................o
-###################################
+......................................c......
+................c............................
+.............................................
+....oo........ooooo........ooo...............
+................................####.........
+............................................o
+####..#####################...###############
 ```
 **Secret (cols 110–130):** a ledge at row 5 that can only be reached by double-jumping from the row-9 step. The relic and 2 coins sit on top, and spikes below punish a missed landing.
 ```
