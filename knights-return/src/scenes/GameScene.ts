@@ -3,6 +3,7 @@ import { Player } from '../entities/Player';
 import { Spike } from '../entities/hazards/Spike';
 import { Enemy } from '../entities/enemies/Enemy';
 import { Rat } from '../entities/enemies/Rat';
+import { Crow } from '../entities/enemies/Crow';
 import { InputManager } from '../systems/InputManager';
 import { CameraController } from '../systems/CameraController';
 import { CheckpointManager } from '../systems/CheckpointManager';
@@ -165,6 +166,7 @@ export class GameScene extends Phaser.Scene {
       this.events.emit('coinChanged', this.levelCoinsCollected);
     }, this);
 
+    this.showLevelTitle();
     this.levelStartTime = this.time.now;
   }
 
@@ -339,11 +341,25 @@ export class GameScene extends Phaser.Scene {
     const layer = map.getObjectLayer('Entities');
     if (!layer) return;
     for (const obj of layer.objects) {
-      if (obj.type === 'rat') {
-        const rat = new Rat(this, obj.x ?? 0, obj.y ?? 0, this.platforms);
-        this.enemies.add(rat, true);
+      const x = obj.x ?? 0;
+      const y = obj.y ?? 0;
+      let enemy: Enemy | null = null;
+      if (obj.type === 'rat') enemy = new Rat(this, x, y, this.platforms);
+      else if (obj.type === 'crow') enemy = new Crow(this, x, y, this.player);
+      if (enemy) {
+        this.enemies.add(enemy, true);
+        enemy.applyBodySettings(); // group add resets gravity / max velocity to group defaults
       }
     }
+  }
+
+  /** "LEVEL 1-2" card that fades out shortly after the level starts. */
+  private showLevelTitle(): void {
+    const title = this.add.text(this.scale.width / 2, 70, `LEVEL ${this.levelId}`, {
+      fontSize: '14px', color: '#ffdd00', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+    this.tweens.add({ targets: title, alpha: 0, delay: 1200, duration: 500, onComplete: () => title.destroy() });
   }
 
   private onPlayerEnemyContact(

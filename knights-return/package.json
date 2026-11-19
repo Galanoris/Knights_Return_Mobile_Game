@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "levels": "node scripts/build-level.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0"

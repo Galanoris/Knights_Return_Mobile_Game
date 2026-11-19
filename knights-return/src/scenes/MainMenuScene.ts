@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../systems/SaveManager';
+import { getContinueLevelId } from '../data/levels';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -45,7 +46,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     if (hasSave) {
       menuObjs.push(this.makeButton(cx, nextY, 'CONTINUE', () => {
-        this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
+        const id = getContinueLevelId(SaveManager.get().crowns);
+        this.scene.start('GameScene', { levelKey: id, levelId: id });
       }));
       nextY += 20;
     }
@@ -90,7 +92,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.add.text(cx, iy + 10, '── GOAL ──', {
         fontSize: '8px', color: '#ffffff', fontFamily: 'monospace',
       }).setOrigin(0.5),
-      this.add.text(cx, iy + 26, 'Defeat rats, collect coins,\nreach the red flag!', {
+      this.add.text(cx, iy + 26, 'Beat rats and crows, collect coins,\nreach the red flag!', {
         fontSize: '7px', color: '#aaaaaa', fontFamily: 'monospace', align: 'center',
       }).setOrigin(0.5),
     );

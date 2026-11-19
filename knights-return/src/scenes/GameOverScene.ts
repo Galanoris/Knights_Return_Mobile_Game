@@ -7,8 +7,9 @@ export class GameOverScene extends Phaser.Scene {
     super({ key: 'GameOverScene' });
   }
 
-  create(): void {
+  create(data: { levelId?: string }): void {
     this.restartCalled = false;
+    const levelId = data.levelId ?? '1-1';
 
     const cx = this.scale.width / 2;
     const cy = this.scale.height / 2;
@@ -25,7 +26,7 @@ export class GameOverScene extends Phaser.Scene {
     const doRestart = () => {
       if (this.restartCalled) return;
       this.restartCalled = true;
-      this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
+      this.scene.start('GameScene', { levelKey: levelId, levelId });
     };
 
     // Grace period via native setTimeout — no dependency on Phaser update loop

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PLAYABLE_LEVEL_IDS } from '../data/levels';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -20,7 +21,9 @@ export class PreloadScene extends Phaser.Scene {
       fontSize: '8px', color: '#ffffff', fontFamily: 'monospace',
     }).setOrigin(0.5);
 
-    this.load.tilemapTiledJSON('1-1', 'assets/tilemaps/levels/1-1.json');
+    for (const id of PLAYABLE_LEVEL_IDS) {
+      this.load.tilemapTiledJSON(id, `assets/tilemaps/levels/${id}.json`);
+    }
   }
 
   create(): void {
@@ -154,6 +157,28 @@ export class PreloadScene extends Phaser.Scene {
       // Tail (cols 10–11, rows 6–9)
       g.fillStyle(dark); g.fillRect(10, 6, 2, 1);
       g.fillStyle(dark); g.fillRect(11, 7, 1, 2);
+    });
+
+    // ── Crow (12×10) — black bird, faces right (flipX when flying left) ─────
+    this.makeTexture('crow', 12, 10, g => {
+      const black = 0x14121c, dark = 0x2a2638, sheen = 0x4a4466;
+      const beak = 0xe0a020, eye = 0xffdd33;
+
+      // Body (cols 2–9, rows 3–7)
+      g.fillStyle(dark);  g.fillRect(2, 3, 8, 5);
+      g.fillStyle(black); g.fillRect(2, 7, 8, 1);    // belly shadow
+      // Tail feathers (cols 0–2, rows 4–6)
+      g.fillStyle(black); g.fillRect(0, 4, 2, 2); g.fillRect(0, 6, 1, 1);
+      // Raised wing (cols 3–7, rows 0–3)
+      g.fillStyle(black); g.fillRect(4, 0, 3, 1); g.fillRect(3, 1, 5, 2);
+      g.fillStyle(sheen); g.fillRect(4, 1, 3, 1);    // wing sheen
+      // Head (cols 8–10, rows 2–5)
+      g.fillStyle(dark);  g.fillRect(8, 2, 3, 4);
+      g.fillStyle(eye);   g.fillRect(9, 3, 1, 1);
+      // Beak (col 11)
+      g.fillStyle(beak);  g.fillRect(11, 4, 1, 1);
+      // Legs (rows 8–9)
+      g.fillStyle(beak);  g.fillRect(5, 8, 1, 2); g.fillRect(7, 8, 1, 2);
     });
 
     // ── Spike (16×16) — three-tine spike strip ──────────────────────────────

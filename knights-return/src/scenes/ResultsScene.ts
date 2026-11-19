@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getNextLevelId } from '../data/levels';
 
 export interface ResultsData {
   levelId: string;
@@ -61,6 +62,14 @@ export class ResultsScene extends Phaser.Scene {
     y += 10;
 
     // Starts dim, brightens after grace period
+    const nextId = getNextLevelId(data.levelId);
+    if (!nextId) {
+      this.add.text(cx, y, 'More of the road awaits soon...', {
+        fontSize: '8px', color: '#aaaaaa', fontFamily: 'monospace',
+      }).setOrigin(0.5);
+      y += 14;
+    }
+
     const prompt = this.add.text(cx, y, 'tap or press any key to continue', {
       fontSize: '8px', color: '#aaffaa', fontFamily: 'monospace',
     }).setOrigin(0.5).setAlpha(0.3);
@@ -68,7 +77,11 @@ export class ResultsScene extends Phaser.Scene {
     const doContinue = () => {
       if (this.continueCalled) return;
       this.continueCalled = true;
-      this.scene.start('GameScene', { levelKey: '1-1', levelId: '1-1' });
+      if (nextId) {
+        this.scene.start('GameScene', { levelKey: nextId, levelId: nextId });
+      } else {
+        this.scene.start('MainMenuScene');
+      }
     };
 
     // 1s grace period — lets crown animation play before accepting input

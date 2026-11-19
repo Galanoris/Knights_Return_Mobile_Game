@@ -12,6 +12,8 @@ You are **Aldric**, a young squire returning from delivering a message when the 
 
 Short 16-bit story panels (2–3 static frames with text) play between regions. They should be skippable and never longer than 15 seconds.
 
+Panel-by-panel boards and per-level storyboards live in [knights-return-storyboard.md](knights-return-storyboard.md).
+
 ---
 
 ## 2. Structure

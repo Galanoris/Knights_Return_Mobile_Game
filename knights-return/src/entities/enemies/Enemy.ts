@@ -22,7 +22,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.stats = stats;
     this.health = stats.health;
     this.platformLayer = platformLayer ?? null;
-    (this.body as Phaser.Physics.Arcade.Body).setMaxVelocityX(stats.speed * 1.5);
+    this.applyBodySettings();
+  }
+
+  /**
+   * Per-enemy body tuning. Adding a sprite to an Arcade physics group resets
+   * gravity and max velocity to the group defaults, so GameScene calls this
+   * again after `enemies.add()`. Subclasses override and call super.
+   */
+  applyBodySettings(): void {
+    (this.body as Phaser.Physics.Arcade.Body).setMaxVelocityX(this.stats.speed * 1.5);
   }
 
   update(): void {
